@@ -2,7 +2,7 @@
 #include "input.hpp"
 #include "../console/console.hpp"
 
-int input()
+int mouse_input()
 {
     SDL_Event event;
 
