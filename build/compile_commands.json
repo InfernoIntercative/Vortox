@@ -1,38 +1,44 @@
 [
 {
   "directory": "/home/russian95/Xylon/build",
-  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/Core -I/home/russian95/Xylon/src/Levels -I/home/russian95/Xylon/src/Player -I/home/russian95/Xylon/src/Graphics -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/Core/main.cpp.o -c /home/russian95/Xylon/src/Core/main.cpp",
-  "file": "/home/russian95/Xylon/src/Core/main.cpp",
-  "output": "CMakeFiles/XylonEngine.dir/src/Core/main.cpp.o"
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/console/console.cpp.o -c /home/russian95/Xylon/src/console/console.cpp",
+  "file": "/home/russian95/Xylon/src/console/console.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/console/console.cpp.o"
 },
 {
   "directory": "/home/russian95/Xylon/build",
-  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/Core -I/home/russian95/Xylon/src/Levels -I/home/russian95/Xylon/src/Player -I/home/russian95/Xylon/src/Graphics -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/Graphics/g_graphics.cpp.o -c /home/russian95/Xylon/src/Graphics/g_graphics.cpp",
-  "file": "/home/russian95/Xylon/src/Graphics/g_graphics.cpp",
-  "output": "CMakeFiles/XylonEngine.dir/src/Graphics/g_graphics.cpp.o"
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/core/main.cpp.o -c /home/russian95/Xylon/src/core/main.cpp",
+  "file": "/home/russian95/Xylon/src/core/main.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/core/main.cpp.o"
 },
 {
   "directory": "/home/russian95/Xylon/build",
-  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/Core -I/home/russian95/Xylon/src/Levels -I/home/russian95/Xylon/src/Player -I/home/russian95/Xylon/src/Graphics -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/Player/p_player.cpp.o -c /home/russian95/Xylon/src/Player/p_player.cpp",
-  "file": "/home/russian95/Xylon/src/Player/p_player.cpp",
-  "output": "CMakeFiles/XylonEngine.dir/src/Player/p_player.cpp.o"
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/fonts/fonts.cpp.o -c /home/russian95/Xylon/src/fonts/fonts.cpp",
+  "file": "/home/russian95/Xylon/src/fonts/fonts.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/fonts/fonts.cpp.o"
 },
 {
   "directory": "/home/russian95/Xylon/build",
-  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/Core -I/home/russian95/Xylon/src/Levels -I/home/russian95/Xylon/src/Player -I/home/russian95/Xylon/src/Graphics -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/Levels/l_levels.cpp.o -c /home/russian95/Xylon/src/Levels/l_levels.cpp",
-  "file": "/home/russian95/Xylon/src/Levels/l_levels.cpp",
-  "output": "CMakeFiles/XylonEngine.dir/src/Levels/l_levels.cpp.o"
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/graphics/texture.cpp.o -c /home/russian95/Xylon/src/graphics/texture.cpp",
+  "file": "/home/russian95/Xylon/src/graphics/texture.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/graphics/texture.cpp.o"
 },
 {
   "directory": "/home/russian95/Xylon/build",
-  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/Core -I/home/russian95/Xylon/src/Levels -I/home/russian95/Xylon/src/Player -I/home/russian95/Xylon/src/Graphics -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/Texts/t_text.cpp.o -c /home/russian95/Xylon/src/Texts/t_text.cpp",
-  "file": "/home/russian95/Xylon/src/Texts/t_text.cpp",
-  "output": "CMakeFiles/XylonEngine.dir/src/Texts/t_text.cpp.o"
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/levels/load.cpp.o -c /home/russian95/Xylon/src/levels/load.cpp",
+  "file": "/home/russian95/Xylon/src/levels/load.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/levels/load.cpp.o"
 },
 {
   "directory": "/home/russian95/Xylon/build",
-  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/Core -I/home/russian95/Xylon/src/Levels -I/home/russian95/Xylon/src/Player -I/home/russian95/Xylon/src/Graphics -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/Console/c_console.cpp.o -c /home/russian95/Xylon/src/Console/c_console.cpp",
-  "file": "/home/russian95/Xylon/src/Console/c_console.cpp",
-  "output": "CMakeFiles/XylonEngine.dir/src/Console/c_console.cpp.o"
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/player/keyboard.cpp.o -c /home/russian95/Xylon/src/player/keyboard.cpp",
+  "file": "/home/russian95/Xylon/src/player/keyboard.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/player/keyboard.cpp.o"
+},
+{
+  "directory": "/home/russian95/Xylon/build",
+  "command": "/usr/bin/c++  -I/home/russian95/Xylon/src/core -I/home/russian95/Xylon/src/console -I/home/russian95/Xylon/src/fonts -I/home/russian95/Xylon/src/def -I/home/russian95/Xylon/src/player -isystem /usr/include/SDL2 -g -o CMakeFiles/XylonEngine.dir/src/player/mouse.cpp.o -c /home/russian95/Xylon/src/player/mouse.cpp",
+  "file": "/home/russian95/Xylon/src/player/mouse.cpp",
+  "output": "CMakeFiles/XylonEngine.dir/src/player/mouse.cpp.o"
 }
 ]

@@ -12,15 +12,16 @@ set(BIN_DIR ${CMAKE_BINARY_DIR}/bin)
 # Executable name
 set(EXEC XylonEngine)
 
-# Define source files
-set(SOURCES
-    ${SRC_DIR}/Core/main.cpp
-    ${SRC_DIR}/Graphics/g_graphics.cpp
-    ${SRC_DIR}/Player/p_player.cpp
-    ${SRC_DIR}/Levels/l_levels.cpp
-    ${SRC_DIR}/Texts/t_text.cpp
-    ${SRC_DIR}/Console/c_console.cpp
+# Automatically detect all source files (all .cpp files in src and subdirectories)
+file(GLOB_RECURSE SOURCES
+    ${SRC_DIR}/*.cpp
 )
+
+foreach(TO_REMOVE ${SOURCES})
+    if(${TO_REMOVE} MATCHES "${SRC_DIR}/lib/")
+        list(REMOVE_ITEM SOURCES ${TO_REMOVE})
+    endif()
+endforeach()
 
 # Find external packages
 find_package(SDL2 REQUIRED)
@@ -30,10 +31,11 @@ find_package(SDL2_ttf REQUIRED)
 
 # Include directories
 include_directories(
-    ${SRC_DIR}/Core
-    ${SRC_DIR}/Levels
-    ${SRC_DIR}/Player
-    ${SRC_DIR}/Graphics
+    ${SRC_DIR}/core
+    ${SRC_DIR}/console
+    ${SRC_DIR}/fonts
+    ${SRC_DIR}/def
+    ${SRC_DIR}/player
     ${SDL2_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}

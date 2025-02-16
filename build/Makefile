@@ -142,149 +142,173 @@ clean_project/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/clean_project.dir/build.make CMakeFiles/clean_project.dir/build
 .PHONY : clean_project/fast
 
-src/Console/c_console.o: src/Console/c_console.cpp.o
-.PHONY : src/Console/c_console.o
+src/console/console.o: src/console/console.cpp.o
+.PHONY : src/console/console.o
 
 # target to build an object file
-src/Console/c_console.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Console/c_console.cpp.o
-.PHONY : src/Console/c_console.cpp.o
+src/console/console.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/console/console.cpp.o
+.PHONY : src/console/console.cpp.o
 
-src/Console/c_console.i: src/Console/c_console.cpp.i
-.PHONY : src/Console/c_console.i
+src/console/console.i: src/console/console.cpp.i
+.PHONY : src/console/console.i
 
 # target to preprocess a source file
-src/Console/c_console.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Console/c_console.cpp.i
-.PHONY : src/Console/c_console.cpp.i
+src/console/console.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/console/console.cpp.i
+.PHONY : src/console/console.cpp.i
 
-src/Console/c_console.s: src/Console/c_console.cpp.s
-.PHONY : src/Console/c_console.s
+src/console/console.s: src/console/console.cpp.s
+.PHONY : src/console/console.s
 
 # target to generate assembly for a file
-src/Console/c_console.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Console/c_console.cpp.s
-.PHONY : src/Console/c_console.cpp.s
+src/console/console.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/console/console.cpp.s
+.PHONY : src/console/console.cpp.s
 
-src/Core/main.o: src/Core/main.cpp.o
-.PHONY : src/Core/main.o
+src/core/main.o: src/core/main.cpp.o
+.PHONY : src/core/main.o
 
 # target to build an object file
-src/Core/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Core/main.cpp.o
-.PHONY : src/Core/main.cpp.o
+src/core/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/core/main.cpp.o
+.PHONY : src/core/main.cpp.o
 
-src/Core/main.i: src/Core/main.cpp.i
-.PHONY : src/Core/main.i
+src/core/main.i: src/core/main.cpp.i
+.PHONY : src/core/main.i
 
 # target to preprocess a source file
-src/Core/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Core/main.cpp.i
-.PHONY : src/Core/main.cpp.i
+src/core/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/core/main.cpp.i
+.PHONY : src/core/main.cpp.i
 
-src/Core/main.s: src/Core/main.cpp.s
-.PHONY : src/Core/main.s
+src/core/main.s: src/core/main.cpp.s
+.PHONY : src/core/main.s
 
 # target to generate assembly for a file
-src/Core/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Core/main.cpp.s
-.PHONY : src/Core/main.cpp.s
+src/core/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/core/main.cpp.s
+.PHONY : src/core/main.cpp.s
 
-src/Graphics/g_graphics.o: src/Graphics/g_graphics.cpp.o
-.PHONY : src/Graphics/g_graphics.o
+src/fonts/fonts.o: src/fonts/fonts.cpp.o
+.PHONY : src/fonts/fonts.o
 
 # target to build an object file
-src/Graphics/g_graphics.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Graphics/g_graphics.cpp.o
-.PHONY : src/Graphics/g_graphics.cpp.o
+src/fonts/fonts.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/fonts/fonts.cpp.o
+.PHONY : src/fonts/fonts.cpp.o
 
-src/Graphics/g_graphics.i: src/Graphics/g_graphics.cpp.i
-.PHONY : src/Graphics/g_graphics.i
+src/fonts/fonts.i: src/fonts/fonts.cpp.i
+.PHONY : src/fonts/fonts.i
 
 # target to preprocess a source file
-src/Graphics/g_graphics.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Graphics/g_graphics.cpp.i
-.PHONY : src/Graphics/g_graphics.cpp.i
+src/fonts/fonts.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/fonts/fonts.cpp.i
+.PHONY : src/fonts/fonts.cpp.i
 
-src/Graphics/g_graphics.s: src/Graphics/g_graphics.cpp.s
-.PHONY : src/Graphics/g_graphics.s
+src/fonts/fonts.s: src/fonts/fonts.cpp.s
+.PHONY : src/fonts/fonts.s
 
 # target to generate assembly for a file
-src/Graphics/g_graphics.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Graphics/g_graphics.cpp.s
-.PHONY : src/Graphics/g_graphics.cpp.s
+src/fonts/fonts.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/fonts/fonts.cpp.s
+.PHONY : src/fonts/fonts.cpp.s
 
-src/Levels/l_levels.o: src/Levels/l_levels.cpp.o
-.PHONY : src/Levels/l_levels.o
+src/graphics/texture.o: src/graphics/texture.cpp.o
+.PHONY : src/graphics/texture.o
 
 # target to build an object file
-src/Levels/l_levels.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Levels/l_levels.cpp.o
-.PHONY : src/Levels/l_levels.cpp.o
+src/graphics/texture.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/graphics/texture.cpp.o
+.PHONY : src/graphics/texture.cpp.o
 
-src/Levels/l_levels.i: src/Levels/l_levels.cpp.i
-.PHONY : src/Levels/l_levels.i
+src/graphics/texture.i: src/graphics/texture.cpp.i
+.PHONY : src/graphics/texture.i
 
 # target to preprocess a source file
-src/Levels/l_levels.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Levels/l_levels.cpp.i
-.PHONY : src/Levels/l_levels.cpp.i
+src/graphics/texture.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/graphics/texture.cpp.i
+.PHONY : src/graphics/texture.cpp.i
 
-src/Levels/l_levels.s: src/Levels/l_levels.cpp.s
-.PHONY : src/Levels/l_levels.s
+src/graphics/texture.s: src/graphics/texture.cpp.s
+.PHONY : src/graphics/texture.s
 
 # target to generate assembly for a file
-src/Levels/l_levels.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Levels/l_levels.cpp.s
-.PHONY : src/Levels/l_levels.cpp.s
+src/graphics/texture.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/graphics/texture.cpp.s
+.PHONY : src/graphics/texture.cpp.s
 
-src/Player/p_player.o: src/Player/p_player.cpp.o
-.PHONY : src/Player/p_player.o
+src/levels/load.o: src/levels/load.cpp.o
+.PHONY : src/levels/load.o
 
 # target to build an object file
-src/Player/p_player.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Player/p_player.cpp.o
-.PHONY : src/Player/p_player.cpp.o
+src/levels/load.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/levels/load.cpp.o
+.PHONY : src/levels/load.cpp.o
 
-src/Player/p_player.i: src/Player/p_player.cpp.i
-.PHONY : src/Player/p_player.i
+src/levels/load.i: src/levels/load.cpp.i
+.PHONY : src/levels/load.i
 
 # target to preprocess a source file
-src/Player/p_player.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Player/p_player.cpp.i
-.PHONY : src/Player/p_player.cpp.i
+src/levels/load.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/levels/load.cpp.i
+.PHONY : src/levels/load.cpp.i
 
-src/Player/p_player.s: src/Player/p_player.cpp.s
-.PHONY : src/Player/p_player.s
+src/levels/load.s: src/levels/load.cpp.s
+.PHONY : src/levels/load.s
 
 # target to generate assembly for a file
-src/Player/p_player.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Player/p_player.cpp.s
-.PHONY : src/Player/p_player.cpp.s
+src/levels/load.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/levels/load.cpp.s
+.PHONY : src/levels/load.cpp.s
 
-src/Texts/t_text.o: src/Texts/t_text.cpp.o
-.PHONY : src/Texts/t_text.o
+src/player/keyboard.o: src/player/keyboard.cpp.o
+.PHONY : src/player/keyboard.o
 
 # target to build an object file
-src/Texts/t_text.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Texts/t_text.cpp.o
-.PHONY : src/Texts/t_text.cpp.o
+src/player/keyboard.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/player/keyboard.cpp.o
+.PHONY : src/player/keyboard.cpp.o
 
-src/Texts/t_text.i: src/Texts/t_text.cpp.i
-.PHONY : src/Texts/t_text.i
+src/player/keyboard.i: src/player/keyboard.cpp.i
+.PHONY : src/player/keyboard.i
 
 # target to preprocess a source file
-src/Texts/t_text.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Texts/t_text.cpp.i
-.PHONY : src/Texts/t_text.cpp.i
+src/player/keyboard.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/player/keyboard.cpp.i
+.PHONY : src/player/keyboard.cpp.i
 
-src/Texts/t_text.s: src/Texts/t_text.cpp.s
-.PHONY : src/Texts/t_text.s
+src/player/keyboard.s: src/player/keyboard.cpp.s
+.PHONY : src/player/keyboard.s
 
 # target to generate assembly for a file
-src/Texts/t_text.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/Texts/t_text.cpp.s
-.PHONY : src/Texts/t_text.cpp.s
+src/player/keyboard.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/player/keyboard.cpp.s
+.PHONY : src/player/keyboard.cpp.s
+
+src/player/mouse.o: src/player/mouse.cpp.o
+.PHONY : src/player/mouse.o
+
+# target to build an object file
+src/player/mouse.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/player/mouse.cpp.o
+.PHONY : src/player/mouse.cpp.o
+
+src/player/mouse.i: src/player/mouse.cpp.i
+.PHONY : src/player/mouse.i
+
+# target to preprocess a source file
+src/player/mouse.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/player/mouse.cpp.i
+.PHONY : src/player/mouse.cpp.i
+
+src/player/mouse.s: src/player/mouse.cpp.s
+.PHONY : src/player/mouse.s
+
+# target to generate assembly for a file
+src/player/mouse.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/XylonEngine.dir/build.make CMakeFiles/XylonEngine.dir/src/player/mouse.cpp.s
+.PHONY : src/player/mouse.cpp.s
 
 # Help Target
 help:
@@ -296,24 +320,27 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... clean_project"
 	@echo "... XylonEngine"
-	@echo "... src/Console/c_console.o"
-	@echo "... src/Console/c_console.i"
-	@echo "... src/Console/c_console.s"
-	@echo "... src/Core/main.o"
-	@echo "... src/Core/main.i"
-	@echo "... src/Core/main.s"
-	@echo "... src/Graphics/g_graphics.o"
-	@echo "... src/Graphics/g_graphics.i"
-	@echo "... src/Graphics/g_graphics.s"
-	@echo "... src/Levels/l_levels.o"
-	@echo "... src/Levels/l_levels.i"
-	@echo "... src/Levels/l_levels.s"
-	@echo "... src/Player/p_player.o"
-	@echo "... src/Player/p_player.i"
-	@echo "... src/Player/p_player.s"
-	@echo "... src/Texts/t_text.o"
-	@echo "... src/Texts/t_text.i"
-	@echo "... src/Texts/t_text.s"
+	@echo "... src/console/console.o"
+	@echo "... src/console/console.i"
+	@echo "... src/console/console.s"
+	@echo "... src/core/main.o"
+	@echo "... src/core/main.i"
+	@echo "... src/core/main.s"
+	@echo "... src/fonts/fonts.o"
+	@echo "... src/fonts/fonts.i"
+	@echo "... src/fonts/fonts.s"
+	@echo "... src/graphics/texture.o"
+	@echo "... src/graphics/texture.i"
+	@echo "... src/graphics/texture.s"
+	@echo "... src/levels/load.o"
+	@echo "... src/levels/load.i"
+	@echo "... src/levels/load.s"
+	@echo "... src/player/keyboard.o"
+	@echo "... src/player/keyboard.i"
+	@echo "... src/player/keyboard.s"
+	@echo "... src/player/mouse.o"
+	@echo "... src/player/mouse.i"
+	@echo "... src/player/mouse.s"
 .PHONY : help
 
 
