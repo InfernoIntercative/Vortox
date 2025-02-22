@@ -9,8 +9,10 @@ extern glm::vec3 cameraPos;
 extern glm::vec3 cameraFront;
 extern glm::vec3 cameraUp;
 
-extern float cameraSpeed;
-extern float yaw;
-extern float pitch;
+extern float M_cameraSpeed;
+extern float M_yaw;
+extern float M_pitch;
 
-extern float gMouseSensitivity;
+extern float M_MouseSensitivity;
+
+extern bool M_fly;

@@ -2,7 +2,7 @@ level_version= 4.22
 ceiling_height= 10
 floor_height= 0
 {
-    level_song= "resources/songs/demo.ogg"
+    level_music= "resources/musics/demo.ogg"
     creator= russian95
     description= "test level for the Xylon"
     ambient_light= 0.0

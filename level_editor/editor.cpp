@@ -1,7 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <fstream>
 #include <cmath>
@@ -10,398 +10,426 @@
 #include <sstream>
 #include <algorithm>
 
-// im gui
+// ImGui includes
 #include "../lib/imgui/imgui.h"
 #include "../lib/imgui/imgui_impl_sdl2.h"
 #include "../lib/imgui/imgui_impl_opengl3.h"
 
-// header
+// Custom header (if needed)
 #include "editor.hpp"
 
-struct Point
+// Global text buffers for texture and level name input
+static char gTextureInput[256];
+static char gLevelNameInput[256];
+
+// Structure representing a 2D point
+struct Point2D
 {
-    int x, y;
+    int x;
+    int y;
 };
 
-struct Wall
+// Structure representing a wall (line segment) with attributes
+struct LineWall
 {
-    Point start;
-    Point end;
-    int texture;
-    int flag;
+    Point2D start;
+    Point2D end;
+    int textureID;
+    int flags;
     ImU32 color;
+    float thickness;
 };
 
-double pointToSegmentDistance(double px, double py, double ax, double ay, double bx, double by)
+// Compute the shortest distance from a point (px, py) to a line segment from (ax, ay) to (bx, by)
+double calculateDistance(double px, double py, double ax, double ay, double bx, double by)
 {
-    double vx = bx - ax, vy = by - ay;
-    double wx = px - ax, wy = py - ay;
-    double c1 = vx * wx + vy * wy;
-    if (c1 <= 0)
-        return sqrt((px - ax) * (px - ax) + (py - ay) * (py - ay));
-    double c2 = vx * vx + vy * vy;
-    if (c2 <= c1)
-        return sqrt((px - bx) * (px - bx) + (py - by) * (py - by));
-    double bVal = c1 / c2;
-    double projx = ax + bVal * vx;
-    double projy = ay + bVal * vy;
-    return sqrt((px - projx) * (px - projx) + (py - projy) * (py - projy));
+    double segDX = bx - ax;
+    double segDY = by - ay;
+    double deltaX = px - ax;
+    double deltaY = py - ay;
+    double segLengthSq = segDX * segDX + segDY * segDY;
+    double projection = deltaX * segDX + deltaY * segDY;
+
+    if (projection <= 0)
+    {
+        return std::sqrt((px - ax) * (px - ax) + (py - ay) * (py - ay));
+    }
+    if (projection >= segLengthSq)
+    {
+        return std::sqrt((px - bx) * (px - bx) + (py - by) * (py - by));
+    }
+    double ratio = projection / segLengthSq;
+    double projX = ax + ratio * segDX;
+    double projY = ay + ratio * segDY;
+    return std::sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
 }
 
 int main(int argc, char *argv[])
 {
-    // initialization of SDL with OpenGL
+    // Initialize SDL video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
-        printf("Error: %s\n", SDL_GetError());
+        std::printf("SDL Initialization error: %s\n", SDL_GetError());
         return -1;
     }
+
+    // Set up OpenGL attributes
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
-    SDL_Window *window = SDL_CreateWindow(WINDOW_TITLE,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          WINDOW_WIDTH, WINDOW_HEIGHT,
-                                          SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-    SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1); // VSync
+    // Create SDL window with OpenGL support
+    SDL_Window *window = SDL_CreateWindow(
+        WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    if (!window)
+    {
+        std::printf("Window creation failed: %s\n", SDL_GetError());
+        SDL_Quit();
+        return -1;
+    }
 
-    // initialization of Dear ImGui
+    // Create the OpenGL context
+    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+    if (!glContext)
+    {
+        std::printf("OpenGL context creation failed: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return -1;
+    }
+    SDL_GL_MakeCurrent(window, glContext);
+    SDL_GL_SetSwapInterval(1); // Enable VSync
+
+    // Initialize ImGui context and set up bindings
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
     ImGui::StyleColorsDark();
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init("#version 150");
 
-    // variables for the editor
-    double zoom = 1.0;
-    double offsetX = 0.0, offsetY = 0.0;
-    int gridSize = 30;
-    bool showGrid = true;
-    bool panning = false;
-    int panStartX = 0, panStartY = 0;
-    double offsetStartX = 0.0, offsetStartY = 0.0;
-    std::vector<Wall> walls;
-    bool drawingWall = false;
-    Point startPoint = {0, 0};
-    std::vector<Wall> redoStack;
-    Point worldMousePos = {0, 0};
-    const double levelScale = 0.1;
+    // Variables for view transformation and grid settings
+    double viewZoom = 1.0;
+    double viewOffsetX = 0.0, viewOffsetY = 0.0;
+    int gridSpacing = 30;
+    bool gridVisible = true;
+    bool panningActive = false;
+    int panOriginX = 0, panOriginY = 0;
+    double panStartOffsetX = 0.0, panStartOffsetY = 0.0;
+
+    // Variables for wall drawing and selection
+    std::vector<LineWall> walls;
+    bool wallInProgress = false;
+    Point2D wallStartPoint = {0, 0};
+    std::vector<LineWall> undoStack;
+    Point2D mouseWorldPos = {0, 0};
+    const double levelScaleFactor = 0.1;
     bool selectionMode = false;
-    int selectedWallIndex = -1;
+    int selectedWall = -1;
     bool draggingWall = false;
     bool draggingEndpoint = false;
-    int draggedEndpoint = -1;
-    Point dragStartMouse = {0, 0};
-    Point dragStartWallStart = {0, 0};
-    Point dragStartWallEnd = {0, 0};
-    std::string levelVersion = "4.22";
-    double ceilingHeight = 10.0;
-    double floorHeight = 0.0;
-    std::string textureInput = "resources/textures/brick.png";
-    bool editingTexture = false;
-    bool showHUD = true; // toggle hud
+    int whichEndpoint = -1; // 0 for start, 1 for end
+    Point2D dragStartMouse = {0, 0};
+    Point2D initialWallStart = {0, 0};
+    Point2D initialWallEnd = {0, 0};
 
-    std::vector<ImU32> wallColorPalette = {
+    // Level settings
+    std::string levelVersion = "4.22";
+    float ceilingHeight = 10.0f;
+    float floorHeight = 0.0f;
+    std::string textureFilePath = "resources/textures/brick.png";
+    bool textureEditing = false;
+    bool hudVisible = true;
+    float newWallThickness = 2.0f;
+
+    // Color palettes for walls and background
+    std::vector<ImU32> wallColorOptions = {
         IM_COL32(255, 255, 255, 255),
         IM_COL32(255, 0, 0, 255),
         IM_COL32(0, 255, 0, 255),
         IM_COL32(0, 0, 255, 255)};
-    std::vector<ImU32> bgColors = {
+    std::vector<ImU32> bgColorOptions = {
         IM_COL32(30, 30, 30, 255),
         IM_COL32(20, 20, 50, 255),
         IM_COL32(50, 50, 50, 255)};
-    int bgColorIndex = 0;
-    ImU32 bgColor = bgColors[bgColorIndex];
-    std::string toolMode = "Drawing";
+    int currentBgIndex = 0;
+    ImU32 currentBgColor = bgColorOptions[currentBgIndex];
+    std::string activeTool = "Drawing";
 
-    bool running = true;
+    // Main loop
+    bool G_Running = true;
     SDL_Event event;
-    while (running)
+    while (G_Running)
     {
-        // process the events
         while (SDL_PollEvent(&event))
         {
+            // Feed events to ImGui
             ImGui_ImplSDL2_ProcessEvent(&event);
+
             if (event.type == SDL_QUIT)
-                running = false;
+            {
+                G_Running = false;
+            }
+
+            // Zoom handling via mouse wheel
             if (event.type == SDL_MOUSEWHEEL)
             {
-                int mouseX, mouseY;
-                SDL_GetMouseState(&mouseX, &mouseY);
-                double oldZoom = zoom;
+                int mx, my;
+                SDL_GetMouseState(&mx, &my);
+                double oldZoom = viewZoom;
                 if (event.wheel.y > 0)
-                    zoom *= 1.1;
+                    viewZoom *= 1.1;
                 else if (event.wheel.y < 0)
-                    zoom /= 1.1;
-                // updates offset to keep the cursor position in the same location in the world
-                offsetX = offsetX + (mouseX / zoom - mouseX / oldZoom);
-                offsetY = offsetY + (mouseY / zoom - mouseY / oldZoom);
+                    viewZoom /= 1.1;
+                viewOffsetX += (mx / viewZoom - mx / oldZoom);
+                viewOffsetY += (my / viewZoom - my / oldZoom);
             }
+
+            // Mouse button press events
             if (event.type == SDL_MOUSEBUTTONDOWN)
             {
-                // if the mouse is over the Heads-Up Display, ignore left click events.
+                // Skip processing if ImGui is capturing the mouse for left click
                 if (event.button.button == SDL_BUTTON_LEFT && io.WantCaptureMouse)
                     continue;
 
                 if (event.button.button == SDL_BUTTON_RIGHT)
                 {
-                    panning = true;
-                    panStartX = event.button.x;
-                    panStartY = event.button.y;
-                    offsetStartX = offsetX;
-                    offsetStartY = offsetY;
-                    toolMode = "Panning";
+                    // Begin panning the view
+                    panningActive = true;
+                    panOriginX = event.button.x;
+                    panOriginY = event.button.y;
+                    panStartOffsetX = viewOffsetX;
+                    panStartOffsetY = viewOffsetY;
+                    activeTool = "Panning";
                 }
                 else if (event.button.button == SDL_BUTTON_LEFT)
                 {
-                    int worldX = static_cast<int>(event.button.x / zoom - offsetX);
-                    int worldY = static_cast<int>(event.button.y / zoom - offsetY);
-                    // apply snapping if CTRL press
+                    // Convert screen coordinates to world coordinates
+                    int wx = static_cast<int>(event.button.x / viewZoom - viewOffsetX);
+                    int wy = static_cast<int>(event.button.y / viewZoom - viewOffsetY);
+
+                    // Snap to grid if CTRL is held down
                     if (SDL_GetModState() & KMOD_CTRL)
                     {
-                        worldX = static_cast<int>(round(worldX / static_cast<double>(gridSize)) * gridSize);
-                        worldY = static_cast<int>(round(worldY / static_cast<double>(gridSize)) * gridSize);
+                        wx = static_cast<int>(std::round(wx / static_cast<double>(gridSpacing)) * gridSpacing);
+                        wy = static_cast<int>(std::round(wy / static_cast<double>(gridSpacing)) * gridSpacing);
                     }
 
                     if (!selectionMode)
                     {
-                        toolMode = "Drawing";
-                        if (!drawingWall)
+                        activeTool = "Drawing";
+                        if (!wallInProgress)
                         {
-                            startPoint = {worldX, worldY};
-                            drawingWall = true;
-                            redoStack.clear();
+                            // Start drawing a new wall
+                            wallStartPoint = {wx, wy};
+                            wallInProgress = true;
+                            undoStack.clear();
                         }
                         else
                         {
-                            Wall newWall;
-                            newWall.start = startPoint;
-                            newWall.end = {worldX, worldY};
-                            newWall.texture = 1;
-                            newWall.flag = 0;
-                            newWall.color = wallColorPalette[0];
+                            // Finish drawing the wall
+                            LineWall newWall;
+                            newWall.start = wallStartPoint;
+                            newWall.end = {wx, wy};
+                            newWall.textureID = 1;
+                            newWall.flags = 0;
+                            newWall.color = wallColorOptions[0];
+                            newWall.thickness = newWallThickness;
                             walls.push_back(newWall);
-                            drawingWall = false;
+                            wallInProgress = false;
                         }
                     }
-                    else // selection mode
+                    else
                     {
-                        toolMode = "Selection";
-                        const double threshold = 5.0;
-                        int foundIndex = -1;
+                        // Selection mode: attempt to select a wall endpoint or a wall segment
+                        activeTool = "Selection";
+                        const double tolerance = 5.0;
+                        int foundWall = -1;
+                        // Check if near one of the wall endpoints
                         for (size_t i = 0; i < walls.size(); i++)
                         {
-                            double distStart = sqrt(pow(worldX - walls[i].start.x, 2) + pow(worldY - walls[i].start.y, 2));
-                            double distEnd = sqrt(pow(worldX - walls[i].end.x, 2) + pow(worldY - walls[i].end.y, 2));
-                            if (distStart < threshold)
+                            double dStart = std::sqrt(std::pow(wx - walls[i].start.x, 2) +
+                                                      std::pow(wy - walls[i].start.y, 2));
+                            double dEnd = std::sqrt(std::pow(wx - walls[i].end.x, 2) +
+                                                    std::pow(wy - walls[i].end.y, 2));
+                            if (dStart < tolerance)
                             {
-                                foundIndex = static_cast<int>(i);
+                                foundWall = static_cast<int>(i);
                                 draggingEndpoint = true;
-                                draggedEndpoint = 0;
-                                dragStartMouse = {worldX, worldY};
-                                dragStartWallStart = walls[i].start;
+                                whichEndpoint = 0;
+                                dragStartMouse = {wx, wy};
+                                initialWallStart = walls[i].start;
                                 break;
                             }
-                            else if (distEnd < threshold)
+                            else if (dEnd < tolerance)
                             {
-                                foundIndex = static_cast<int>(i);
+                                foundWall = static_cast<int>(i);
                                 draggingEndpoint = true;
-                                draggedEndpoint = 1;
-                                dragStartMouse = {worldX, worldY};
-                                dragStartWallEnd = walls[i].end;
+                                whichEndpoint = 1;
+                                dragStartMouse = {wx, wy};
+                                initialWallEnd = walls[i].end;
                                 break;
                             }
                         }
-                        if (foundIndex == -1)
+                        // If no endpoint is close, check proximity to the wall segment itself
+                        if (foundWall == -1)
                         {
                             for (size_t i = 0; i < walls.size(); i++)
                             {
-                                double dist = pointToSegmentDistance(worldX, worldY,
-                                                                     walls[i].start.x, walls[i].start.y,
-                                                                     walls[i].end.x, walls[i].end.y);
-                                if (dist < threshold)
+                                double dSeg = calculateDistance(wx, wy,
+                                                                walls[i].start.x, walls[i].start.y,
+                                                                walls[i].end.x, walls[i].end.y);
+                                if (dSeg < tolerance)
                                 {
-                                    foundIndex = static_cast<int>(i);
+                                    foundWall = static_cast<int>(i);
                                     draggingWall = true;
-                                    dragStartMouse = {worldX, worldY};
-                                    dragStartWallStart = walls[i].start;
-                                    dragStartWallEnd = walls[i].end;
+                                    dragStartMouse = {wx, wy};
+                                    initialWallStart = walls[i].start;
+                                    initialWallEnd = walls[i].end;
                                     break;
                                 }
                             }
                         }
-                        selectedWallIndex = foundIndex;
+                        selectedWall = foundWall;
                     }
                 }
             }
+
+            // Mouse button release events
             if (event.type == SDL_MOUSEBUTTONUP)
             {
                 if (event.button.button == SDL_BUTTON_RIGHT)
-                    panning = false;
+                    panningActive = false;
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     if (selectionMode)
                     {
                         draggingWall = false;
                         draggingEndpoint = false;
-                        draggedEndpoint = -1;
+                        whichEndpoint = -1;
                     }
                 }
             }
+
+            // Mouse motion events
             if (event.type == SDL_MOUSEMOTION)
             {
-                // calculate mouse position in world with snapping if CTRL is pressed
-                int tmpX = static_cast<int>(event.motion.x / zoom - offsetX);
-                int tmpY = static_cast<int>(event.motion.y / zoom - offsetY);
+                int posX = static_cast<int>(event.motion.x / viewZoom - viewOffsetX);
+                int posY = static_cast<int>(event.motion.y / viewZoom - viewOffsetY);
                 if (SDL_GetModState() & KMOD_CTRL)
                 {
-                    tmpX = static_cast<int>(round(tmpX / static_cast<double>(gridSize)) * gridSize);
-                    tmpY = static_cast<int>(round(tmpY / static_cast<double>(gridSize)) * gridSize);
+                    posX = static_cast<int>(std::round(posX / static_cast<double>(gridSpacing)) * gridSpacing);
+                    posY = static_cast<int>(std::round(posY / static_cast<double>(gridSpacing)) * gridSpacing);
                 }
-                worldMousePos = {tmpX, tmpY};
+                mouseWorldPos = {posX, posY};
 
-                if (panning)
+                // Update view offset during panning
+                if (panningActive)
                 {
-                    offsetX = offsetStartX + (event.motion.x - panStartX) / zoom;
-                    offsetY = offsetStartY + (event.motion.y - panStartY) / zoom;
+                    viewOffsetX = panStartOffsetX + (event.motion.x - panOriginX) / viewZoom;
+                    viewOffsetY = panStartOffsetY + (event.motion.y - panOriginY) / viewZoom;
                 }
+                // Update wall position during dragging in selection mode
                 if (selectionMode)
                 {
-                    if (draggingWall && selectedWallIndex != -1)
+                    if (draggingWall && selectedWall != -1)
                     {
-                        int dx = worldMousePos.x - dragStartMouse.x;
-                        int dy = worldMousePos.y - dragStartMouse.y;
-                        walls[selectedWallIndex].start.x = dragStartWallStart.x + dx;
-                        walls[selectedWallIndex].start.y = dragStartWallStart.y + dy;
-                        walls[selectedWallIndex].end.x = dragStartWallEnd.x + dx;
-                        walls[selectedWallIndex].end.y = dragStartWallEnd.y + dy;
+                        int dx = mouseWorldPos.x - dragStartMouse.x;
+                        int dy = mouseWorldPos.y - dragStartMouse.y;
+                        walls[selectedWall].start.x = initialWallStart.x + dx;
+                        walls[selectedWall].start.y = initialWallStart.y + dy;
+                        walls[selectedWall].end.x = initialWallEnd.x + dx;
+                        walls[selectedWall].end.y = initialWallEnd.y + dy;
                     }
-                    if (draggingEndpoint && selectedWallIndex != -1)
+                    if (draggingEndpoint && selectedWall != -1)
                     {
-                        int dx = worldMousePos.x - dragStartMouse.x;
-                        int dy = worldMousePos.y - dragStartMouse.y;
-                        if (draggedEndpoint == 0)
+                        int dx = mouseWorldPos.x - dragStartMouse.x;
+                        int dy = mouseWorldPos.y - dragStartMouse.y;
+                        if (whichEndpoint == 0)
                         {
-                            walls[selectedWallIndex].start.x = dragStartWallStart.x + dx;
-                            walls[selectedWallIndex].start.y = dragStartWallStart.y + dy;
+                            walls[selectedWall].start.x = initialWallStart.x + dx;
+                            walls[selectedWall].start.y = initialWallStart.y + dy;
                         }
-                        else if (draggedEndpoint == 1)
+                        else if (whichEndpoint == 1)
                         {
-                            walls[selectedWallIndex].end.x = dragStartWallEnd.x + dx;
-                            walls[selectedWallIndex].end.y = dragStartWallEnd.y + dy;
+                            walls[selectedWall].end.x = initialWallEnd.x + dx;
+                            walls[selectedWall].end.y = initialWallEnd.y + dy;
                         }
                     }
                 }
             }
+
+            // Keyboard event handling
             if (event.type == SDL_KEYDOWN)
             {
-                // toggle to show/not show the HUD with the keybind H
-                if (event.key.keysym.sym == SDLK_h)
+                switch (event.key.keysym.sym)
                 {
-                    showHUD = !showHUD;
-                }
-                else if (event.key.keysym.sym == SDLK_s)
-                {
+                case SDLK_h:
+                    hudVisible = !hudVisible;
+                    break;
+                case SDLK_s:
                     selectionMode = !selectionMode;
-                    if (selectionMode)
-                        toolMode = "Selection";
+                    if (!selectionMode)
+                    {
+                        activeTool = "Drawing";
+                        selectedWall = -1;
+                    }
                     else
                     {
-                        toolMode = "Drawing";
-                        selectedWallIndex = -1;
+                        activeTool = "Selection";
                     }
-                }
-                else if (event.key.keysym.sym == SDLK_DELETE)
-                {
-                    if (selectionMode && selectedWallIndex != -1)
+                    break;
+                case SDLK_DELETE:
+                    if (selectionMode && selectedWall != -1)
                     {
-                        walls.erase(walls.begin() + selectedWallIndex);
-                        selectedWallIndex = -1;
+                        walls.erase(walls.begin() + selectedWall);
+                        selectedWall = -1;
                     }
-                }
-                else if (event.key.keysym.sym == SDLK_z && (SDL_GetModState() & KMOD_CTRL))
-                {
-                    if (drawingWall)
-                        drawingWall = false;
-                    else if (!walls.empty())
+                    break;
+                case SDLK_z:
+                    if ((SDL_GetModState() & KMOD_CTRL))
                     {
-                        redoStack.push_back(walls.back());
-                        walls.pop_back();
-                    }
-                }
-                else if (event.key.keysym.sym == SDLK_y && (SDL_GetModState() & KMOD_CTRL))
-                {
-                    if (!redoStack.empty())
-                    {
-                        walls.push_back(redoStack.back());
-                        redoStack.pop_back();
-                    }
-                }
-                else if (event.key.keysym.sym == SDLK_F5)
-                {
-                    std::string fileName;
-                    std::cout << "enter file name (or leave empty for level.txt): ";
-                    std::getline(std::cin, fileName);
-                    if (fileName.empty())
-                        fileName = "level.xym";
-                    std::ofstream ofs(fileName);
-                    if (ofs.is_open())
-                    {
-                        ofs << "level_version= " << levelVersion << "\n";
-                        ofs << "ceiling_height= " << ceilingHeight << "\n";
-                        ofs << "floor_height= " << floorHeight << "\n";
-                        ofs << "{\n";
-                        ofs << "    level_song= \"resources/songs/demo.ogg\"\n";
-                        ofs << "    creator= russian95\n";
-                        ofs << "    description= \"test level for the Xylon\"\n";
-                        ofs << "    ambient_light= 0.0\n";
-                        ofs << "}\n\n";
-                        ofs << "[SECTOR]\n";
-                        ofs << "1 0 " << walls.size() << " 0.0 5.0\n\n";
-                        ofs << "[WALL]\n";
-                        for (const auto &wall : walls)
+                        if (wallInProgress)
+                            wallInProgress = false;
+                        else if (!walls.empty())
                         {
-                            ofs << (wall.start.x * levelScale) << " " << (wall.start.y * levelScale) << " "
-                                << (wall.end.x * levelScale) << " " << (wall.end.y * levelScale) << " "
-                                << wall.flag << "\n";
+                            undoStack.push_back(walls.back());
+                            walls.pop_back();
                         }
-                        ofs << "\n[TEXTURES]\n";
-                        ofs << "1=" << textureInput << "\n";
-                        ofs.close();
-                        printf("Level saved as %s!\n", fileName.c_str());
                     }
-                    else
+                    break;
+                case SDLK_y:
+                    if ((SDL_GetModState() & KMOD_CTRL) && !undoStack.empty())
                     {
-                        printf("Error saving level file.\n");
+                        walls.push_back(undoStack.back());
+                        undoStack.pop_back();
                     }
-                }
-                else if (event.key.keysym.sym == SDLK_F9)
+                    break;
+                case SDLK_F9:
                 {
-                    std::string fileName;
-                    std::cout << "Enter file name to load: ";
-                    std::getline(std::cin, fileName);
-                    if (fileName.empty())
-                        std::cout << "File name empty. Aborting load.\n";
+                    std::string loadFile;
+                    std::cout << "Enter filename to load: ";
+                    std::getline(std::cin, loadFile);
+                    if (loadFile.empty())
+                    {
+                        std::cout << "Filename is empty. Load aborted." << std::endl;
+                    }
                     else
                     {
-                        std::ifstream ifs(fileName);
-                        if (!ifs.is_open())
+                        std::ifstream fin(loadFile);
+                        if (!fin.is_open())
                         {
-                            printf("Error opening file %s\n", fileName.c_str());
+                            std::printf("Failed to open file %s\n", loadFile.c_str());
                         }
                         else
                         {
                             walls.clear();
                             std::string line;
                             bool wallSectionFound = false;
-                            while (std::getline(ifs, line))
+                            while (std::getline(fin, line))
                             {
                                 if (line.find("[WALL]") != std::string::npos)
                                 {
@@ -410,10 +438,12 @@ int main(int argc, char *argv[])
                                 }
                             }
                             if (!wallSectionFound)
-                                std::cout << "No [WALL] section found in file.\n";
+                            {
+                                std::cout << "No [WALL] section found in file." << std::endl;
+                            }
                             else
                             {
-                                while (std::getline(ifs, line))
+                                while (std::getline(fin, line))
                                 {
                                     if (line.empty())
                                         continue;
@@ -421,163 +451,213 @@ int main(int argc, char *argv[])
                                         break;
                                     std::istringstream iss(line);
                                     double sx, sy, ex, ey;
-                                    int flag;
-                                    if (!(iss >> sx >> sy >> ex >> ey >> flag))
+                                    int fl;
+                                    if (!(iss >> sx >> sy >> ex >> ey >> fl))
                                         continue;
-                                    Wall wall;
-                                    wall.start.x = static_cast<int>(sx / levelScale);
-                                    wall.start.y = static_cast<int>(sy / levelScale);
-                                    wall.end.x = static_cast<int>(ex / levelScale);
-                                    wall.end.y = static_cast<int>(ey / levelScale);
-                                    wall.flag = flag;
-                                    wall.texture = 1;
-                                    wall.color = wallColorPalette[0];
-                                    walls.push_back(wall);
+                                    LineWall lw;
+                                    lw.start.x = static_cast<int>(sx / levelScaleFactor);
+                                    lw.start.y = static_cast<int>(sy / levelScaleFactor);
+                                    lw.end.x = static_cast<int>(ex / levelScaleFactor);
+                                    lw.end.y = static_cast<int>(ey / levelScaleFactor);
+                                    lw.flags = fl;
+                                    lw.textureID = 1;
+                                    lw.color = wallColorOptions[0];
+                                    lw.thickness = newWallThickness;
+                                    walls.push_back(lw);
                                 }
-                                std::cout << "Loaded " << walls.size() << " walls from " << fileName << "\n";
+                                std::cout << "Loaded " << walls.size() << " walls from " << loadFile << std::endl;
                             }
                         }
                     }
+                    break;
                 }
-                else if (event.key.keysym.sym == SDLK_g)
-                {
-                    showGrid = !showGrid;
-                }
-                else if (event.key.keysym.sym == SDLK_EQUALS)
-                {
-                    gridSize += 5;
-                }
-                else if (event.key.keysym.sym == SDLK_MINUS)
-                {
-                    gridSize = std::max(5, gridSize - 5);
-                }
-                else if (event.key.keysym.sym == SDLK_b)
-                {
-                    bgColorIndex = (bgColorIndex + 1) % bgColors.size();
-                    bgColor = bgColors[bgColorIndex];
-                }
-                else if (event.key.keysym.sym == SDLK_v)
-                {
-                    if (selectionMode && selectedWallIndex != -1)
+                case SDLK_g:
+                    gridVisible = !gridVisible;
+                    break;
+                case SDLK_EQUALS:
+                    gridSpacing += 5;
+                    break;
+                case SDLK_MINUS:
+                    gridSpacing = std::max(5, gridSpacing - 5);
+                    break;
+                case SDLK_b:
+                    currentBgIndex = (currentBgIndex + 1) % bgColorOptions.size();
+                    currentBgColor = bgColorOptions[currentBgIndex];
+                    break;
+                case SDLK_v:
+                    if (selectionMode && selectedWall != -1)
                     {
-                        ImU32 currentColor = walls[selectedWallIndex].color;
-                        int index = 0;
-                        for (size_t i = 0; i < wallColorPalette.size(); i++)
+                        ImU32 currentCol = walls[selectedWall].color;
+                        int idx = 0;
+                        for (size_t i = 0; i < wallColorOptions.size(); i++)
                         {
-                            if (wallColorPalette[i] == currentColor)
+                            if (wallColorOptions[i] == currentCol)
                             {
-                                index = i;
+                                idx = static_cast<int>(i);
                                 break;
                             }
                         }
-                        index = (index + 1) % wallColorPalette.size();
-                        walls[selectedWallIndex].color = wallColorPalette[index];
+                        idx = (idx + 1) % wallColorOptions.size();
+                        walls[selectedWall].color = wallColorOptions[idx];
                     }
-                }
-                else if (event.key.keysym.sym == SDLK_d)
-                {
-                    if (selectionMode && selectedWallIndex != -1)
+                    break;
+                case SDLK_d:
+                    if (selectionMode && selectedWall != -1)
                     {
-                        Wall dup = walls[selectedWallIndex];
-                        dup.start.x += 5;
-                        dup.start.y += 5;
-                        dup.end.x += 5;
-                        dup.end.y += 5;
-                        walls.push_back(dup);
+                        LineWall copyWall = walls[selectedWall];
+                        copyWall.start.x += 5;
+                        copyWall.start.y += 5;
+                        copyWall.end.x += 5;
+                        copyWall.end.y += 5;
+                        walls.push_back(copyWall);
                     }
-                }
-                else if (event.key.keysym.sym == SDLK_x)
-                {
+                    break;
+                case SDLK_x:
                     walls.clear();
+                    break;
+                default:
+                    break;
                 }
             }
-        } // end of the event loop
+        }
 
-        // frame imgui
+        // Start a new ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        // window of the Editor HUD (only if showHUD == true)
-        if (showHUD)
+        // Draw HUD window if enabled
+        if (hudVisible)
         {
             ImGui::Begin("HUD");
-            ImGui::Text("level_version: %s", levelVersion.c_str());
-            ImGui::Text("ceiling_height: %.2f", ceilingHeight);
-            ImGui::Text("floor_height: %.2f", floorHeight);
-            ImGui::Text("texture: %s", textureInput.c_str());
-            ImGui::Text("zoom: %.2f", zoom);
-            ImGui::Text("mouse: (%d, %d)", worldMousePos.x, worldMousePos.y);
-            ImGui::Text("tool: %s", toolMode.c_str());
-            ImGui::Text("grid size: %d", gridSize);
-            ImGui::Text("grid: %s", showGrid ? "ON" : "OFF");
-            if (drawingWall)
+            ImGui::Text("Level Version: %s", levelVersion.c_str());
+            ImGui::InputText("Level Name", gLevelNameInput, sizeof(gLevelNameInput));
+            if (ImGui::Button("Save Level"))
             {
-                double length = sqrt(pow(worldMousePos.x - startPoint.x, 2) + pow(worldMousePos.y - startPoint.y, 2));
-                ImGui::Text("wall length: %.2f", length);
+                std::string saveFile(gLevelNameInput);
+                if (saveFile.empty())
+                    saveFile = "level.xym";
+                std::ofstream fout(saveFile);
+                if (fout.is_open())
+                {
+                    fout << "level_version= " << levelVersion << "\n";
+                    fout << "ceiling_height= " << ceilingHeight << "\n";
+                    fout << "floor_height= " << floorHeight << "\n";
+                    fout << "{\n";
+                    fout << "    level_music= \"resources/musics/demo.ogg\"\n";
+                    fout << "    creator= russian95\n";
+                    fout << "    description= \"test level for the Xylon\"\n";
+                    fout << "    ambient_light= 0.0\n";
+                    fout << "}\n\n";
+                    fout << "[SECTOR]\n";
+                    fout << "1 0 " << walls.size() << " 0.0 5.0\n\n";
+                    fout << "[WALL]\n";
+                    for (const auto &wall : walls)
+                    {
+                        fout << (wall.start.x * levelScaleFactor) << " " << (wall.start.y * levelScaleFactor) << " "
+                             << (wall.end.x * levelScaleFactor) << " " << (wall.end.y * levelScaleFactor) << " "
+                             << wall.flags << "\n";
+                    }
+                    fout << "\n[TEXTURES]\n";
+                    fout << "1=" << textureFilePath << "\n";
+                    fout.close();
+                    std::printf("Level saved as %s!\n", saveFile.c_str());
+                }
+                else
+                {
+                    std::printf("Failed to open file: %s\n", saveFile.c_str());
+                }
+            }
+            ImGui::InputFloat("Ceiling Height", &ceilingHeight, 0.1f, 1.0f, "%.2f");
+            ImGui::InputFloat("Floor Height", &floorHeight, 0.1f, 1.0f, "%.2f");
+            if (ImGui::InputText("Texture", gTextureInput, sizeof(gTextureInput)))
+            {
+                textureFilePath = gTextureInput;
+            }
+            ImGui::Text("Zoom: %.2f", viewZoom);
+            ImGui::Text("Mouse Position: (%d, %d)", mouseWorldPos.x, mouseWorldPos.y);
+            ImGui::Text("Active Tool: %s", activeTool.c_str());
+            ImGui::Text("Grid Spacing: %d", gridSpacing);
+            ImGui::Text("Grid: %s", gridVisible ? "ON" : "OFF");
+            if (wallInProgress)
+            {
+                double length = std::sqrt(std::pow(mouseWorldPos.x - wallStartPoint.x, 2) +
+                                          std::pow(mouseWorldPos.y - wallStartPoint.y, 2));
+                ImGui::Text("Wall Length: %.2f", length);
+            }
+            ImGui::InputFloat("New Wall Thickness", &newWallThickness, 0.1f, 1.0f, "%.2f");
+            if (selectionMode && selectedWall != -1)
+            {
+                ImGui::InputFloat("Selected Wall Thickness", &walls[selectedWall].thickness, 0.1f, 1.0f, "%.2f");
             }
             ImGui::End();
         }
 
-        // renders the scene: clears the screen and draws the grid and walls using ImGui DrawList
-        int windowWidth = static_cast<int>(io.DisplaySize.x);
-        int windowHeight = static_cast<int>(io.DisplaySize.y);
-        glViewport(0, 0, windowWidth, windowHeight);
-        glClearColor(((bgColor >> 16) & 0xFF) / 255.0f,
-                     ((bgColor >> 8) & 0xFF) / 255.0f,
-                     (bgColor & 0xFF) / 255.0f, 1.0f);
+        // Prepare for rendering
+        int displayW = static_cast<int>(io.DisplaySize.x);
+        int displayH = static_cast<int>(io.DisplaySize.y);
+        glViewport(0, 0, displayW, displayH);
+        glClearColor(((currentBgColor >> 16) & 0xFF) / 255.0f,
+                     ((currentBgColor >> 8) & 0xFF) / 255.0f,
+                     (currentBgColor & 0xFF) / 255.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        ImDrawList *draw_list = ImGui::GetBackgroundDrawList();
-        if (showGrid)
+        // Retrieve ImGui's background draw list for custom drawing
+        ImDrawList *drawList = ImGui::GetBackgroundDrawList();
+
+        // Draw grid lines if enabled
+        if (gridVisible)
         {
-            double worldMinX = -offsetX;
-            double worldMaxX = windowWidth / zoom - offsetX;
-            double worldMinY = -offsetY;
-            double worldMaxY = windowHeight / zoom - offsetY;
-            for (int x = static_cast<int>(floor(worldMinX / gridSize) * gridSize); x <= worldMaxX; x += gridSize)
+            double worldMinX = -viewOffsetX;
+            double worldMaxX = displayW / viewZoom - viewOffsetX;
+            double worldMinY = -viewOffsetY;
+            double worldMaxY = displayH / viewZoom - viewOffsetY;
+            for (int x = static_cast<int>(std::floor(worldMinX / gridSpacing) * gridSpacing); x <= worldMaxX; x += gridSpacing)
             {
-                int screenX = static_cast<int>((x + offsetX) * zoom);
-                draw_list->AddLine(ImVec2(screenX, 0), ImVec2(screenX, windowHeight), IM_COL32(50, 50, 50, 255));
+                int screenX = static_cast<int>((x + viewOffsetX) * viewZoom);
+                drawList->AddLine(ImVec2(screenX, 0), ImVec2(screenX, displayH), IM_COL32(50, 50, 50, 255));
             }
-            for (int y = static_cast<int>(floor(worldMinY / gridSize) * gridSize); y <= worldMaxY; y += gridSize)
+            for (int y = static_cast<int>(std::floor(worldMinY / gridSpacing) * gridSpacing); y <= worldMaxY; y += gridSpacing)
             {
-                int screenY = static_cast<int>((y + offsetY) * zoom);
-                draw_list->AddLine(ImVec2(0, screenY), ImVec2(windowWidth, screenY), IM_COL32(50, 50, 50, 255));
+                int screenY = static_cast<int>((y + viewOffsetY) * viewZoom);
+                drawList->AddLine(ImVec2(0, screenY), ImVec2(displayW, screenY), IM_COL32(50, 50, 50, 255));
             }
-        }
-        // draw already created walls
-        for (size_t i = 0; i < walls.size(); i++)
-        {
-            int startX = static_cast<int>((walls[i].start.x + offsetX) * zoom);
-            int startY = static_cast<int>((walls[i].start.y + offsetY) * zoom);
-            int endX = static_cast<int>((walls[i].end.x + offsetX) * zoom);
-            int endY = static_cast<int>((walls[i].end.y + offsetY) * zoom);
-            ImU32 color = walls[i].color;
-            if (selectionMode && (int)i == selectedWallIndex)
-                color = IM_COL32(0, 255, 0, 255);
-            draw_list->AddLine(ImVec2(startX, startY), ImVec2(endX, endY), color, 2.0f);
-        }
-        // if drawing a wall, draw the preview line
-        if (!selectionMode && drawingWall)
-        {
-            int previewStartX = static_cast<int>((startPoint.x + offsetX) * zoom);
-            int previewStartY = static_cast<int>((startPoint.y + offsetY) * zoom);
-            int previewEndX = static_cast<int>((worldMousePos.x + offsetX) * zoom);
-            int previewEndY = static_cast<int>((worldMousePos.y + offsetY) * zoom);
-            draw_list->AddLine(ImVec2(previewStartX, previewStartY), ImVec2(previewEndX, previewEndY), IM_COL32(255, 0, 0, 255), 2.0f);
         }
 
+        // Draw all walls
+        for (size_t i = 0; i < walls.size(); i++)
+        {
+            int x1 = static_cast<int>((walls[i].start.x + viewOffsetX) * viewZoom);
+            int y1 = static_cast<int>((walls[i].start.y + viewOffsetY) * viewZoom);
+            int x2 = static_cast<int>((walls[i].end.x + viewOffsetX) * viewZoom);
+            int y2 = static_cast<int>((walls[i].end.y + viewOffsetY) * viewZoom);
+            ImU32 col = walls[i].color;
+            if (selectionMode && static_cast<int>(i) == selectedWall)
+                col = IM_COL32(0, 255, 0, 255);
+            drawList->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), col, walls[i].thickness);
+        }
+
+        // Draw preview of the wall being drawn
+        if (!selectionMode && wallInProgress)
+        {
+            int sx = static_cast<int>((wallStartPoint.x + viewOffsetX) * viewZoom);
+            int sy = static_cast<int>((wallStartPoint.y + viewOffsetY) * viewZoom);
+            int ex = static_cast<int>((mouseWorldPos.x + viewOffsetX) * viewZoom);
+            int ey = static_cast<int>((mouseWorldPos.y + viewOffsetY) * viewZoom);
+            drawList->AddLine(ImVec2(sx, sy), ImVec2(ex, ey), IM_COL32(255, 0, 0, 255), newWallThickness);
+        }
+
+        // Render ImGui and swap buffers
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
 
-    // clean
+    // Cleanup all resources before exiting
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
-    SDL_GL_DeleteContext(gl_context);
+    SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
 

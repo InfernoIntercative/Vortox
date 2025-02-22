@@ -8,17 +8,21 @@
 #include <sstream>
 
 #include "struct.hpp"
-#include "../graphics/texture.hpp"
 
-// --- modified loadMap function that also loads textures ---
-bool loadMap(const char *filename, std::vector<Sector> &sectors, std::vector<Wall> &walls,
-             std::unordered_map<std::string, GLuint> &textureLevel)
+// headers
+#include "../graphics/texture.hpp"
+#include "../errors/error.hpp"
+
+// -- load the fucking level lol --
+bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector<Wall> &walls,
+                 std::unordered_map<std::string, GLuint> &textureLevel)
 {
     std::ifstream file(filename);
     if (!file.is_open())
     {
-        std::cerr << "Failed to open map: " << filename << std::endl;
-        return false;
+
+        // yes, YES! IT'S WORKING! uh, no, it's not
+        critical("Failed to open map", filename);
     }
     std::string line;
     enum Section

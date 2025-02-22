@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 rm -rf CMakeCache.txt CMakeFiles/
 
 cmake .

@@ -1,30 +1,30 @@
 #include <SDL2/SDL.h>
-#include "input.hpp"
+
+// glm
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+// headers
 #include "../console/console.hpp"
+#include "mouse.hpp"
 
-int mouse_input()
+// function to process mouse input and update camera direction
+int M_processMouseInput(int dx, int dy, float &M_pitch, float &M_yaw, float M_MouseSensitivity, glm::vec3 &cameraFront)
 {
-    SDL_Event event;
+    M_yaw += dx * M_MouseSensitivity;
+    M_pitch -= dy * M_MouseSensitivity;
 
-    if (SDL_PollEvent(&event))
-    {
-        if (!consoleActive && event.type == SDL_MOUSEMOTION)
-        {
-            float xoffset = event.motion.xrel * gMouseSensitivity;
-            float yoffset = -event.motion.yrel * gMouseSensitivity;
-            yaw += xoffset;
-            pitch += yoffset;
-            if (pitch > 89.0f)
-                pitch = 89.0f;
-            if (pitch < -89.0f)
-                pitch = -89.0f;
-            glm::vec3 front;
-            front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-            front.y = sin(glm::radians(pitch));
-            front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-            cameraFront = glm::normalize(front);
-        }
-    }
+    // clamp pitch
+    if (M_pitch > 89.0f)
+        M_pitch = 89.0f;
+    if (M_pitch < -89.0f)
+        M_pitch = -89.0f;
+
+    // update camera front vector
+    cameraFront.x = cos(glm::radians(M_yaw)) * cos(glm::radians(M_pitch));
+    cameraFront.y = sin(glm::radians(M_pitch));
+    cameraFront.z = sin(glm::radians(M_yaw)) * cos(glm::radians(M_pitch));
+    cameraFront = glm::normalize(cameraFront);
 
     return 0;
 }

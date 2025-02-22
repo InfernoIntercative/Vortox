@@ -2,13 +2,15 @@
 
 #include <stdio.h>
 
-const float WINDOW_WIDTH = 800.0f;
-const float WINDOW_HEIGHT = 600.0f;
-const char WINDOW_TITLE[] = "Xylon Engine (DEVELOPEMENT-NEW-CODE BRANCH)";
-const char default_level_path[] = "levels/d1.xym";
+extern const float WINDOW_WIDTH;
+extern const float WINDOW_HEIGHT;
+extern const char WINDOW_TITLE[];
+extern const char default_level_path[];
 
 // player variables
-const float FOV = 90.0f;
+extern const float FOV;
 
 // for other headers or cpp files
-float deltaTime;
+extern float deltaTime;
+
+extern bool G_Running;

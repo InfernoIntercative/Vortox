@@ -4,11 +4,31 @@
 
 #include <GL/glew.h>
 
-bool gPaused = false;
+bool G_Paused = false;
 bool consoleActive = false;
 float consoleAnim = 0.0f;
+std::string commandInput = "";
 const float consoleAnimSpeed = 5.0f;
 const int consoleHeight = 300;
+
+const char *consoleVertexShaderSource = R"(
+    #version 330 core
+    layout(location = 0) in vec2 position;
+    uniform mat4 model;
+    uniform mat4 projection;
+    void main() {
+        gl_Position = projection * model * vec4(position, 0.0, 1.0);
+    }
+    )";
+
+const char *consoleFragmentShaderSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+    uniform vec4 color;
+    void main() {
+        FragColor = color;
+    }
+    )";
 
 GLuint createConsoleShaderProgram()
 {
