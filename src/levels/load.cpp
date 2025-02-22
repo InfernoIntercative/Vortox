@@ -13,15 +13,13 @@
 #include "../graphics/texture.hpp"
 #include "../errors/error.hpp"
 
-// -- load the fucking level lol --
+// -- load the level com spawn --
 bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector<Wall> &walls,
-                 std::unordered_map<std::string, GLuint> &textureLevel)
+                 std::unordered_map<std::string, GLuint> &textureLevel, Spawn &spawn)
 {
     std::ifstream file(filename);
     if (!file.is_open())
     {
-
-        // yes, YES! IT'S WORKING! uh, no, it's not
         critical("Failed to open map", filename);
     }
     std::string line;
@@ -30,7 +28,8 @@ bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector
         NONE,
         SECTOR,
         WALL,
-        TEXTURES
+        TEXTURES,
+        SPAWN
     };
     Section currentSection = NONE;
     while (std::getline(file, line))
@@ -60,6 +59,11 @@ bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector
             currentSection = TEXTURES;
             continue;
         }
+        else if (token == "[SPAWN]")
+        {
+            currentSection = SPAWN;
+            continue;
+        }
         else if (token[0] == '[')
         {
             currentSection = NONE;
@@ -82,13 +86,13 @@ bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector
         }
         else if (currentSection == TEXTURES)
         {
-            // expect a line of the form: key=path/to/texture.png
+            // espera uma linha no formato: key=path/to/texture.png
             size_t eqPos = token.find('=');
             if (eqPos != std::string::npos)
             {
                 std::string key = token.substr(0, eqPos);
                 std::string path = token.substr(eqPos + 1);
-                // append any remaining tokens (in case the path contains spaces)
+                // concatena tokens adicionais (caso o path tenha espaços)
                 std::string extra;
                 while (linestream >> extra)
                     path += " " + extra;
@@ -98,6 +102,63 @@ bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector
                     std::cerr << "Failed to load texture for key: " << key << " from path: " << path << std::endl;
                 }
                 textureLevel[key] = textureID;
+            }
+        }
+        else if (currentSection == SPAWN)
+        {
+            // espera linhas do tipo key=value
+            size_t eqPos = token.find('=');
+            if (eqPos != std::string::npos)
+            {
+                std::string key = token.substr(0, eqPos);
+                if (key == "x")
+                {
+                    std::string valueStr = token.substr(eqPos + 1);
+                    float xVal;
+                    if (valueStr.empty())
+                        linestream >> xVal;
+                    else
+                        xVal = std::stof(valueStr);
+                    spawn.x = xVal;
+                }
+                else if (key == "y")
+                {
+                    std::string valueStr = token.substr(eqPos + 1);
+                    float yVal;
+                    if (valueStr.empty())
+                        linestream >> yVal;
+                    else
+                        yVal = std::stof(valueStr);
+                    spawn.y = yVal;
+                }
+                else if (key == "size")
+                {
+                    std::string valueStr = token.substr(eqPos + 1);
+                    float sVal;
+                    if (valueStr.empty())
+                        linestream >> sVal;
+                    else
+                        sVal = std::stof(valueStr);
+                    spawn.size = sVal;
+                }
+                else if (key == "color")
+                {
+                    // espera três floats: r, g, b
+                    std::string valueStr = token.substr(eqPos + 1);
+                    float r, g, b;
+                    if (valueStr.empty())
+                    {
+                        linestream >> r >> g >> b;
+                    }
+                    else
+                    {
+                        r = std::stof(valueStr);
+                        linestream >> g >> b;
+                    }
+                    spawn.color[0] = r;
+                    spawn.color[1] = g;
+                    spawn.color[2] = b;
+                }
             }
         }
     }

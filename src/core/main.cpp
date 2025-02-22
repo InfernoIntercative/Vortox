@@ -42,6 +42,8 @@ std::string R_CurrentTextureKey = "1";
 std::vector<std::string> C_CommandHistory;
 int C_HistoryIndex = -1;
 
+Spawn playerSpawn;
+
 glm::vec3 computeLevelCenter(const std::vector<Wall> &walls)
 {
     if (walls.empty())
@@ -108,8 +110,11 @@ std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors, const 
     return vertices;
 }
 
-const char* vertexShaderSource = readShaderFile("shaders/vertex_source.vert");
-const char* fragmentShaderSource = readShaderFile("shaders/fragment_source.frag");
+std::string vertexShaderSourceStr = readShaderFile("shaders/vertex_source.vert");
+const char *vertexShaderSource = vertexShaderSourceStr.c_str();
+
+std::string fragmentShaderSourceStr = readShaderFile("shaders/fragment_source.frag");
+const char *fragmentShaderSource = fragmentShaderSourceStr.c_str();
 
 void processCommand(const std::string &cmd, bool &G_Running, std::string &commandInput,
                     std::vector<Sector> &sectors, std::vector<Wall> &walls,
@@ -140,6 +145,7 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
     }
     else if (token == "load")
     {
+
         std::string filename;
         iss >> filename;
         if (!filename.empty())
@@ -147,7 +153,7 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
             std::vector<Sector> newSectors;
             std::vector<Wall> newWalls;
             std::unordered_map<std::string, GLuint> newTextureMap;
-            if (L_loadLevel(filename.c_str(), newSectors, newWalls, newTextureMap))
+            if (L_loadLevel(filename.c_str(), newSectors, newWalls, newTextureMap, playerSpawn))
             {
                 sectors = newSectors;
                 walls = newWalls;
@@ -167,10 +173,11 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
     }
     else if (token == "reload")
     {
+
         std::vector<Sector> newSectors;
         std::vector<Wall> newWalls;
         std::unordered_map<std::string, GLuint> newTextureMap;
-        if (L_loadLevel(default_level_path, newSectors, newWalls, newTextureMap))
+        if (L_loadLevel(default_level_path, newSectors, newWalls, newTextureMap, playerSpawn))
         {
             sectors = newSectors;
             walls = newWalls;
@@ -332,6 +339,7 @@ void render(GLuint shaderProgram, GLint ourTextureLoc,
 
 int main(int argc, char *argv[])
 {
+
     // initialization
     if (init() < 0)
         return -1;
@@ -424,7 +432,7 @@ int main(int argc, char *argv[])
     std::vector<Sector> sectors;
     std::vector<Wall> walls;
     std::unordered_map<std::string, GLuint> textureLevel;
-    if (!L_loadLevel(default_level_path, sectors, walls, textureLevel))
+    if (!L_loadLevel(default_level_path, sectors, walls, textureLevel, playerSpawn))
     {
         SDL_GL_DeleteContext(context);
         SDL_DestroyWindow(window);
@@ -635,28 +643,33 @@ int main(int argc, char *argv[])
             }
         }
 
-        // --- Head Bob Calculation ---
-        // Check if movement keys are pressed
-        bool isMoving = false;
+        // --- head Bob Calculation ---
+        // check if movement keys are pressed
+        float headBobOffset = 0.0f;
+        if (!consoleActive)
         {
-            const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
-            if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S] ||
-                keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D])
+            bool isMoving = false;
             {
-                isMoving = true;
+                const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
+                if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S] ||
+                    keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D])
+                {
+                    isMoving = true;
+                }
+            }
+
+            if (isMoving)
+            {
+                headBobTimer += deltaTime * bobbingSpeed;
+                headBobOffset = sin(headBobTimer) * bobbingAmplitude;
+            }
+            else
+            {
+                headBobTimer = 0.0f;
             }
         }
-        float headBobOffset = 0.0f;
-        if (isMoving)
-        {
-            headBobTimer += deltaTime * bobbingSpeed;
-            headBobOffset = sin(headBobTimer) * bobbingAmplitude;
-        }
-        else
-        {
-            headBobTimer = 0.0f;
-        }
-        // --- End Head Bob Calculation ---
+
+        // --- end Head Bob Calculation ---
 
         // animate console overlay
         float targetAnim = consoleActive ? 1.0f : 0.0f;

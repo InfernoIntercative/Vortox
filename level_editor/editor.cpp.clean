@@ -1,6 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-#include <GL/glu.h>
+
 #include <cstdio>
 #include <vector>
 #include <fstream>
@@ -10,26 +10,25 @@
 #include <sstream>
 #include <algorithm>
 
+
 #include "../lib/imgui/imgui.h"
 #include "../lib/imgui/imgui_impl_sdl2.h"
 #include "../lib/imgui/imgui_impl_opengl3.h"
+
+
 #include "editor.hpp"
 
-// Variáveis globais para a HUD
+
 static char gTextureInput[256];
 static char gLevelNameInput[256];
 
-bool snapToGrid = false;
-bool snapSpawnToGrid = false;
-bool showEndpoints = false;
-bool showSpawnPoint = true;
-float globalWallThickness = 2.0f; // Slider global de espessura
 
 struct Point2D
 {
     int x;
     int y;
 };
+
 
 struct LineWall
 {
@@ -41,6 +40,7 @@ struct LineWall
     float thickness;
 };
 
+
 double calculateDistance(double px, double py, double ax, double ay, double bx, double by)
 {
     double segDX = bx - ax;
@@ -51,59 +51,19 @@ double calculateDistance(double px, double py, double ax, double ay, double bx, 
     double projection = deltaX * segDX + deltaY * segDY;
 
     if (projection <= 0)
+    {
         return std::sqrt((px - ax) * (px - ax) + (py - ay) * (py - ay));
+    }
     if (projection >= segLengthSq)
+    {
         return std::sqrt((px - bx) * (px - bx) + (py - by) * (py - by));
+    }
     double ratio = projection / segLengthSq;
     double projX = ax + ratio * segDX;
     double projY = ay + ratio * segDY;
     return std::sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
 }
 
-// Helper para rotacionar um ponto em torno de um centro (ângulo em radianos)
-Point2D rotatePoint(const Point2D &p, const Point2D &center, double angle)
-{
-    double s = std::sin(angle);
-    double c = std::cos(angle);
-    int translatedX = p.x - center.x;
-    int translatedY = p.y - center.y;
-    int rotatedX = static_cast<int>(translatedX * c - translatedY * s);
-    int rotatedY = static_cast<int>(translatedX * s + translatedY * c);
-    return {center.x + rotatedX, center.y + rotatedY};
-}
-
-// Função para salvar screenshot (caso precise)
-void SaveScreenshot(const char *filename, int width, int height)
-{
-    std::vector<unsigned char> pixels(width * height * 4);
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-    // Inverte verticalmente
-    for (int j = 0; j < height / 2; j++)
-    {
-        for (int i = 0; i < width * 4; i++)
-        {
-            std::swap(pixels[j * width * 4 + i], pixels[(height - 1 - j) * width * 4 + i]);
-        }
-    }
-    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
-        pixels.data(), width, height, 32, width * 4,
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-        0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff
-#else
-        0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000
-#endif
-    );
-    if (surface)
-    {
-        SDL_SaveBMP(surface, filename);
-        SDL_FreeSurface(surface);
-        std::printf("Screenshot saved as %s!\n", filename);
-    }
-    else
-    {
-        std::printf("Failed to create screenshot surface.\n");
-    }
-}
 
 bool spawnCreated = false;
 SDL_Rect spawnSquare = {0, 0, 30, 30};
@@ -112,18 +72,23 @@ bool draggingSpawn = false;
 int spawnDragOffsetX = 0, spawnDragOffsetY = 0;
 float spawnColor[3] = {1.0f, 1.0f, 0.0f};
 
+
+
 int main(int argc, char *argv[])
 {
+
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         std::printf("SDL Initialization error: %s\n", SDL_GetError());
         return -1;
     }
 
+
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+
 
     SDL_Window *window = SDL_CreateWindow(
         WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -134,6 +99,7 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return -1;
     }
+
 
     SDL_GLContext glContext = SDL_GL_CreateContext(window);
     if (!glContext)
@@ -146,6 +112,7 @@ int main(int argc, char *argv[])
     SDL_GL_MakeCurrent(window, glContext);
     SDL_GL_SetSwapInterval(1);
 
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -154,6 +121,7 @@ int main(int argc, char *argv[])
     ImGui_ImplSDL2_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init("#version 150");
 
+
     double viewZoom = 1.0;
     double viewOffsetX = 0.0, viewOffsetY = 0.0;
     int gridSpacing = 30;
@@ -161,6 +129,7 @@ int main(int argc, char *argv[])
     bool panningActive = false;
     int panOriginX = 0, panOriginY = 0;
     double panStartOffsetX = 0.0, panStartOffsetY = 0.0;
+
 
     std::vector<LineWall> walls;
     bool wallInProgress = false;
@@ -177,6 +146,7 @@ int main(int argc, char *argv[])
     Point2D initialWallStart = {0, 0};
     Point2D initialWallEnd = {0, 0};
 
+
     std::string levelVersion = "4.22";
     float ceilingHeight = 10.0f;
     float floorHeight = 0.0f;
@@ -184,6 +154,7 @@ int main(int argc, char *argv[])
     bool textureEditing = false;
     bool hudVisible = true;
     float newWallThickness = 2.0f;
+
 
     std::vector<ImU32> wallColorOptions = {
         IM_COL32(255, 255, 255, 255),
@@ -198,7 +169,6 @@ int main(int argc, char *argv[])
     ImU32 currentBgColor = bgColorOptions[currentBgIndex];
     std::string activeTool = "Drawing";
 
-    const double rotationIncrement = 5.0 * M_PI / 180.0; // 5 graus em radianos
 
     bool G_Running = true;
     SDL_Event event;
@@ -206,6 +176,7 @@ int main(int argc, char *argv[])
     {
         while (SDL_PollEvent(&event))
         {
+
             ImGui_ImplSDL2_ProcessEvent(&event);
 
             if (event.type == SDL_QUIT)
@@ -213,14 +184,12 @@ int main(int argc, char *argv[])
                 G_Running = false;
             }
 
-            // Se o ImGui está capturando o mouse, ignoramos inputs do editor
-            bool hudActive = io.WantCaptureMouse || io.WantCaptureKeyboard;
 
-            // Processa clique esquerdo para mover spawn (somente se não estiver na HUD)
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT && !io.WantCaptureMouse)
             {
                 int wx = static_cast<int>(event.button.x / viewZoom - viewOffsetX);
                 int wy = static_cast<int>(event.button.y / viewZoom - viewOffsetY);
+
                 if (spawnCreated &&
                     wx >= spawnSquare.x && wx <= spawnSquare.x + spawnSquare.w &&
                     wy >= spawnSquare.y && wy <= spawnSquare.y + spawnSquare.h)
@@ -228,38 +197,33 @@ int main(int argc, char *argv[])
                     draggingSpawn = true;
                     spawnDragOffsetX = wx - spawnSquare.x;
                     spawnDragOffsetY = wy - spawnSquare.y;
+
                     continue;
                 }
             }
-            if (event.type == SDL_MOUSEBUTTONUP)
+            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
             {
-                if (event.button.button == SDL_BUTTON_LEFT)
+                draggingSpawn = false;
+                if (selectionMode)
                 {
-                    draggingSpawn = false;
-                    if (selectionMode)
-                    {
-                        draggingWall = false;
-                        draggingEndpoint = false;
-                        whichEndpoint = -1;
-                    }
-                }
-                if (event.button.button == SDL_BUTTON_RIGHT)
-                {
-                    panningActive = false;
+                    draggingWall = false;
+                    draggingEndpoint = false;
+                    whichEndpoint = -1;
                 }
             }
             if (event.type == SDL_MOUSEMOTION)
             {
                 int posX = static_cast<int>(event.motion.x / viewZoom - viewOffsetX);
                 int posY = static_cast<int>(event.motion.y / viewZoom - viewOffsetY);
-                if (snapToGrid || (SDL_GetModState() & KMOD_CTRL))
+                if (SDL_GetModState() & KMOD_CTRL)
                 {
                     posX = static_cast<int>(std::round(posX / static_cast<double>(gridSpacing)) * gridSpacing);
                     posY = static_cast<int>(std::round(posY / static_cast<double>(gridSpacing)) * gridSpacing);
                 }
                 mouseWorldPos = {posX, posY};
 
-                if (panningActive && !io.WantCaptureMouse)
+
+                if (panningActive)
                 {
                     viewOffsetX = panStartOffsetX + (event.motion.x - panOriginX) / viewZoom;
                     viewOffsetY = panStartOffsetY + (event.motion.y - panOriginY) / viewZoom;
@@ -267,15 +231,8 @@ int main(int argc, char *argv[])
 
                 if (draggingSpawn)
                 {
-                    int newX = mouseWorldPos.x - spawnDragOffsetX;
-                    int newY = mouseWorldPos.y - spawnDragOffsetY;
-                    if (snapSpawnToGrid)
-                    {
-                        newX = static_cast<int>(std::round(newX / static_cast<double>(gridSpacing)) * gridSpacing);
-                        newY = static_cast<int>(std::round(newY / static_cast<double>(gridSpacing)) * gridSpacing);
-                    }
-                    spawnSquare.x = newX;
-                    spawnSquare.y = newY;
+                    spawnSquare.x = mouseWorldPos.x - spawnDragOffsetX;
+                    spawnSquare.y = mouseWorldPos.y - spawnDragOffsetY;
                 }
 
                 if (selectionMode)
@@ -303,26 +260,12 @@ int main(int argc, char *argv[])
                             walls[selectedWall].end.x = initialWallEnd.x + dx;
                             walls[selectedWall].end.y = initialWallEnd.y + dy;
                         }
-                        // Snap de endpoint se próximo a outro
-                        const int snapTolerance = 10;
-                        Point2D &movingPoint = (whichEndpoint == 0) ? walls[selectedWall].start : walls[selectedWall].end;
-                        for (size_t i = 0; i < walls.size(); i++)
-                        {
-                            if (static_cast<int>(i) == selectedWall)
-                                continue;
-                            Point2D candidates[2] = {walls[i].start, walls[i].end};
-                            for (int j = 0; j < 2; j++)
-                            {
-                                int dist = std::sqrt(std::pow(movingPoint.x - candidates[j].x, 2) +
-                                                     std::pow(movingPoint.y - candidates[j].y, 2));
-                                if (dist < snapTolerance)
-                                    movingPoint = candidates[j];
-                            }
-                        }
                     }
                 }
             }
-            if (event.type == SDL_MOUSEWHEEL && !io.WantCaptureMouse)
+
+
+            if (event.type == SDL_MOUSEWHEEL)
             {
                 int mx, my;
                 SDL_GetMouseState(&mx, &my);
@@ -335,9 +278,14 @@ int main(int argc, char *argv[])
                 viewOffsetY += (my / viewZoom - my / oldZoom);
             }
 
-            // Processa clique do mouse para desenho/seleção (somente se não estiver na HUD)
-            if (event.type == SDL_MOUSEBUTTONDOWN && !io.WantCaptureMouse)
+
+            if (event.type == SDL_MOUSEBUTTONDOWN)
             {
+
+                if (event.button.button == SDL_BUTTON_LEFT && io.WantCaptureMouse)
+                    continue;
+
+
                 if (event.button.button == SDL_BUTTON_RIGHT)
                 {
                     panningActive = true;
@@ -349,13 +297,18 @@ int main(int argc, char *argv[])
                 }
                 else if (event.button.button == SDL_BUTTON_LEFT)
                 {
+
+
                     int wx = static_cast<int>(event.button.x / viewZoom - viewOffsetX);
                     int wy = static_cast<int>(event.button.y / viewZoom - viewOffsetY);
-                    if (snapToGrid || (SDL_GetModState() & KMOD_CTRL))
+
+
+                    if (SDL_GetModState() & KMOD_CTRL)
                     {
                         wx = static_cast<int>(std::round(wx / static_cast<double>(gridSpacing)) * gridSpacing);
                         wy = static_cast<int>(std::round(wy / static_cast<double>(gridSpacing)) * gridSpacing);
                     }
+
                     if (!selectionMode)
                     {
                         activeTool = "Drawing";
@@ -430,8 +383,9 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            // Processa keys somente se o ImGui não estiver capturando
-            if (event.type == SDL_KEYDOWN && !io.WantCaptureKeyboard)
+
+
+            if (event.type == SDL_KEYDOWN)
             {
                 switch (event.key.keysym.sym)
                 {
@@ -476,28 +430,98 @@ int main(int argc, char *argv[])
                         undoStack.pop_back();
                     }
                     break;
-                // Rotaciona parede com Q e E
-                case SDLK_q:
-                    if (selectionMode && selectedWall != -1)
+                case SDLK_F9:
+                {
+                    std::string loadFile;
+                    std::cout << "Enter filename to load: ";
+                    std::getline(std::cin, loadFile);
+                    if (loadFile.empty())
                     {
-                        Point2D center = {(walls[selectedWall].start.x + walls[selectedWall].end.x) / 2,
-                                          (walls[selectedWall].start.y + walls[selectedWall].end.y) / 2};
-                        walls[selectedWall].start = rotatePoint(walls[selectedWall].start, center, -rotationIncrement);
-                        walls[selectedWall].end = rotatePoint(walls[selectedWall].end, center, -rotationIncrement);
+                        std::cout << "Filename is empty. Load aborted." << std::endl;
+                    }
+                    else
+                    {
+                        std::ifstream fin(loadFile);
+                        if (!fin.is_open())
+                        {
+                            std::printf("Failed to open file %s\n", loadFile.c_str());
+                        }
+                        else
+                        {
+                            walls.clear();
+                            std::string line;
+                            bool wallSectionFound = false;
+                            while (std::getline(fin, line))
+                            {
+                                if (line.find("[WALL]") != std::string::npos)
+                                {
+                                    wallSectionFound = true;
+                                    break;
+                                }
+                            }
+                            if (!wallSectionFound)
+                            {
+                                std::cout << "No [WALL] section found in file." << std::endl;
+                            }
+                            else
+                            {
+                                while (std::getline(fin, line))
+                                {
+                                    if (line.empty())
+                                        continue;
+                                    if (line[0] == '[')
+                                        break;
+                                    std::istringstream iss(line);
+                                    double sx, sy, ex, ey;
+                                    int fl;
+                                    if (!(iss >> sx >> sy >> ex >> ey >> fl))
+                                        continue;
+                                    LineWall lw;
+                                    lw.start.x = static_cast<int>(sx / levelScaleFactor);
+                                    lw.start.y = static_cast<int>(sy / levelScaleFactor);
+                                    lw.end.x = static_cast<int>(ex / levelScaleFactor);
+                                    lw.end.y = static_cast<int>(ey / levelScaleFactor);
+                                    lw.flags = fl;
+                                    lw.textureID = 1;
+                                    lw.color = wallColorOptions[0];
+                                    lw.thickness = newWallThickness;
+                                    walls.push_back(lw);
+                                }
+                                std::cout << "Loaded " << walls.size() << " walls from " << loadFile << std::endl;
+                            }
+                        }
                     }
                     break;
-                case SDLK_e:
-                    if (selectionMode && selectedWall != -1)
-                    {
-                        Point2D center = {(walls[selectedWall].start.x + walls[selectedWall].end.x) / 2,
-                                          (walls[selectedWall].start.y + walls[selectedWall].end.y) / 2};
-                        walls[selectedWall].start = rotatePoint(walls[selectedWall].start, center, rotationIncrement);
-                        walls[selectedWall].end = rotatePoint(walls[selectedWall].end, center, rotationIncrement);
-                    }
+                }
+                case SDLK_g:
+                    gridVisible = !gridVisible;
+                    break;
+                case SDLK_EQUALS:
+                    gridSpacing += 5;
+                    break;
+                case SDLK_MINUS:
+                    gridSpacing = std::max(5, gridSpacing - 5);
                     break;
                 case SDLK_b:
                     currentBgIndex = (currentBgIndex + 1) % bgColorOptions.size();
                     currentBgColor = bgColorOptions[currentBgIndex];
+                    break;
+                case SDLK_v:
+                    if (selectionMode && selectedWall != -1)
+                    {
+                        ImU32 currentCol = walls[selectedWall].color;
+                        int idx = 0;
+                        for (size_t i = 0; i < wallColorOptions.size(); i++)
+                        {
+                            if (wallColorOptions[i] == currentCol)
+                            {
+                                idx = static_cast<int>(i);
+                                break;
+                            }
+                        }
+                        idx = (idx + 1) % wallColorOptions.size();
+                        walls[selectedWall].color = wallColorOptions[idx];
+                    }
                     break;
                 case SDLK_d:
                     if (selectionMode && selectedWall != -1)
@@ -519,11 +543,12 @@ int main(int argc, char *argv[])
             }
         }
 
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        // Janela da HUD
+
         if (hudVisible)
         {
             ImGui::Begin("HUD");
@@ -557,15 +582,6 @@ int main(int argc, char *argv[])
                     }
                     fout << "\n[TEXTURES]\n";
                     fout << "1=" << textureFilePath << "\n";
-                    // Se houver spawn, salva também
-                    if (spawnCreated)
-                    {
-                        fout << "\n[SPAWN]\n";
-                        fout << "x= " << spawnSquare.x * levelScaleFactor << "\n";
-                        fout << "y= " << spawnSquare.y * levelScaleFactor << "\n";
-                        fout << "size= " << spawnSquare.w * levelScaleFactor << "\n";
-                        fout << "color= " << spawnColor[0] << " " << spawnColor[1] << " " << spawnColor[2] << "\n";
-                    }
                     fout.close();
                     std::printf("Level saved as %s!\n", saveFile.c_str());
                 }
@@ -592,55 +608,34 @@ int main(int argc, char *argv[])
                 ImGui::Text("Wall Length: %.2f", length);
             }
             ImGui::InputFloat("New Wall Thickness", &newWallThickness, 0.1f, 1.0f, "%.2f");
-
-            // Features extras
-            ImGui::Checkbox("Snap to Grid", &snapToGrid);
-            ImGui::Checkbox("Snap Spawn to Grid", &snapSpawnToGrid);
-            ImGui::SliderInt("Grid Spacing", &gridSpacing, 5, 100);
-            ImGui::Checkbox("Show Wall Endpoints", &showEndpoints);
             if (selectionMode && selectedWall != -1)
             {
-                ImGui::ColorEdit4("Selected Wall Color", reinterpret_cast<float *>(&walls[selectedWall].color));
+                ImGui::InputFloat("Selected Wall Thickness", &walls[selectedWall].thickness, 0.1f, 1.0f, "%.2f");
             }
-            if (ImGui::Button("Duplicate All Walls"))
+
+
+            if (ImGui::Button("Create Spawn Point"))
             {
-                size_t count = walls.size();
-                for (size_t i = 0; i < count; i++)
-                {
-                    LineWall dup = walls[i];
-                    dup.start.x += 5;
-                    dup.start.y += 5;
-                    dup.end.x += 5;
-                    dup.end.y += 5;
-                    walls.push_back(dup);
-                }
+                spawnCreated = true;
+                spawnSquareSize = 30;
+                spawnSquare.x = mouseWorldPos.x - spawnSquareSize / 2;
+                spawnSquare.y = mouseWorldPos.y - spawnSquareSize / 2;
+                spawnSquare.w = spawnSquareSize;
+                spawnSquare.h = spawnSquareSize;
             }
-            if (ImGui::Button("Clear Undo Stack"))
+            ImGui::SameLine();
+            if (ImGui::Button("Reset Spawn"))
             {
-                undoStack.clear();
-            }
-            if (ImGui::Button("Reset Level"))
-            {
-                walls.clear();
                 spawnCreated = false;
-                viewZoom = 1.0;
-                viewOffsetX = 0;
-                viewOffsetY = 0;
             }
-            if (ImGui::Button("Save Screenshot"))
+            ImGui::SliderInt("Spawn Size", &spawnSquareSize, 10, 100);
+            if (spawnCreated)
             {
-                int displayW = static_cast<int>(io.DisplaySize.x);
-                int displayH = static_cast<int>(io.DisplaySize.y);
-                SaveScreenshot("screenshot.bmp", displayW, displayH);
+
+                spawnSquare.w = spawnSquareSize;
+                spawnSquare.h = spawnSquareSize;
+                ImGui::ColorEdit3("Spawn Color", spawnColor);
             }
-            if (ImGui::SliderFloat("All Walls Thickness", &globalWallThickness, 0.1f, 10.0f))
-            {
-                for (auto &wall : walls)
-                {
-                    wall.thickness = globalWallThickness;
-                }
-            }
-            ImGui::Checkbox("Show Spawn Point", &showSpawnPoint);
             if (ImGui::Button("Reset View"))
             {
                 viewZoom = 1.0;
@@ -669,6 +664,7 @@ int main(int argc, char *argv[])
             }
             if (ImGui::Button("Load Level"))
             {
+
                 std::ifstream fin("level.xym");
                 if (!fin.is_open())
                 {
@@ -728,68 +724,9 @@ int main(int argc, char *argv[])
             {
                 hudVisible = !hudVisible;
             }
-            // Botão para criar spawn
-            if (ImGui::Button("Create Spawn Point"))
-            {
-                spawnCreated = true;
-                spawnSquareSize = 30;
-                spawnSquare.x = mouseWorldPos.x - spawnSquareSize / 2;
-                spawnSquare.y = mouseWorldPos.y - spawnSquareSize / 2;
-                spawnSquare.w = spawnSquareSize;
-                spawnSquare.h = spawnSquareSize;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Reset Spawn"))
-            {
-                spawnCreated = false;
-            }
-            ImGui::SliderInt("Spawn Size", &spawnSquareSize, 10, 100);
-            ImGui::ColorEdit3("Spawn Color", spawnColor);
             ImGui::End();
         }
 
-        // Janela 3D View
-        if (ImGui::Begin("3D View"))
-        {
-            ImVec2 viewSize = ImGui::GetContentRegionAvail();
-
-            // Salva viewport atual e configura nova viewport para 3D
-            glPushAttrib(GL_VIEWPORT_BIT);
-            glViewport(0, 0, (int)viewSize.x, (int)(viewSize.y > 0 ? viewSize.y : 1.0f));
-
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            gluPerspective(45.0, viewSize.x / (viewSize.y > 0 ? viewSize.y : 1.0f), 0.1, 1000.0);
-
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-            // Configura câmera (exemplo simples)
-            gluLookAt(0, -50, 50, 0, 0, 0, 0, 0, 1);
-
-            // Renderiza as "paredes" em 3D (apenas linhas representando floor e ceiling)
-            glColor3f(1, 1, 1);
-            glLineWidth(2.0f);
-            for (const auto &wall : walls)
-            {
-                glBegin(GL_LINES);
-                glVertex3f(wall.start.x * levelScaleFactor, wall.start.y * levelScaleFactor, floorHeight);
-                glVertex3f(wall.end.x * levelScaleFactor, wall.end.y * levelScaleFactor, floorHeight);
-
-                glVertex3f(wall.start.x * levelScaleFactor, wall.start.y * levelScaleFactor, ceilingHeight);
-                glVertex3f(wall.end.x * levelScaleFactor, wall.end.y * levelScaleFactor, ceilingHeight);
-                glEnd();
-            }
-
-            // Restaura as matrizes e viewport
-            glPopMatrix();
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-            glMatrixMode(GL_MODELVIEW);
-            glPopAttrib();
-        }
-        ImGui::End(); // Sempre chama End() para evitar erro de estado
 
         int displayW = static_cast<int>(io.DisplaySize.x);
         int displayH = static_cast<int>(io.DisplaySize.y);
@@ -799,7 +736,10 @@ int main(int argc, char *argv[])
                      (currentBgColor & 0xFF) / 255.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+
         ImDrawList *drawList = ImGui::GetBackgroundDrawList();
+
+
         if (gridVisible)
         {
             double worldMinX = -viewOffsetX;
@@ -818,7 +758,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Renderiza paredes na view 2D
+
         for (size_t i = 0; i < walls.size(); i++)
         {
             int x1 = static_cast<int>((walls[i].start.x + viewOffsetX) * viewZoom);
@@ -829,12 +769,9 @@ int main(int argc, char *argv[])
             if (selectionMode && static_cast<int>(i) == selectedWall)
                 col = IM_COL32(0, 255, 0, 255);
             drawList->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), col, walls[i].thickness);
-            if (showEndpoints)
-            {
-                drawList->AddCircleFilled(ImVec2(x1, y1), 4.0f, IM_COL32(255, 255, 0, 255));
-                drawList->AddCircleFilled(ImVec2(x2, y2), 4.0f, IM_COL32(255, 255, 0, 255));
-            }
         }
+
+
         if (!selectionMode && wallInProgress)
         {
             int sx = static_cast<int>((wallStartPoint.x + viewOffsetX) * viewZoom);
@@ -843,7 +780,9 @@ int main(int argc, char *argv[])
             int ey = static_cast<int>((mouseWorldPos.y + viewOffsetY) * viewZoom);
             drawList->AddLine(ImVec2(sx, sy), ImVec2(ex, ey), IM_COL32(255, 0, 0, 255), newWallThickness);
         }
-        if (spawnCreated && showSpawnPoint)
+
+
+        if (spawnCreated)
         {
             int screenX = static_cast<int>((spawnSquare.x + viewOffsetX) * viewZoom);
             int screenY = static_cast<int>((spawnSquare.y + viewOffsetY) * viewZoom);
@@ -855,10 +794,12 @@ int main(int argc, char *argv[])
             drawList->AddRect(ImVec2(screenX, screenY), ImVec2(screenX + screenW, screenY + screenH), col, 0.0f, 0, 2.0f);
         }
 
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();

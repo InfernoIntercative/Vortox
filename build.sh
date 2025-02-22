@@ -6,7 +6,7 @@ rm -rf CMakeCache.txt CMakeFiles/
 
 cmake .
 
-if make; then
+if make VERBOSE=1; then
   ./bin/XylonEngine "$@"
 else
   echo "Compilation failed. The binary will not be executed."

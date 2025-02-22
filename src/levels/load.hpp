@@ -8,4 +8,4 @@
 #include "struct.hpp"
 
 bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector<Wall> &walls,
-                 std::unordered_map<std::string, GLuint> &textureLevel);
+                 std::unordered_map<std::string, GLuint> &textureLevel, Spawn &spawn);

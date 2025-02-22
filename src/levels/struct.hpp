@@ -15,3 +15,9 @@ struct Sector
     float floor;
     float ceiling;
 };
+
+struct Spawn
+{
+    float x, y, size;
+    float color[3]; // RGB
+};
