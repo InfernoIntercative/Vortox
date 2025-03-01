@@ -1,11 +1,10 @@
 #include <stdio.h>
-#include <vector>     // Make sure this is here
-#include <SDL2/SDL.h> // Defines Uint8
+#include <vector>
+#include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../console/console.hpp"
 #include "keyboard.hpp"
 #include "input.hpp"
 #include "collision.hpp"

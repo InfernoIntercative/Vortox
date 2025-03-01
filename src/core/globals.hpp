@@ -8,7 +8,7 @@ extern const char WINDOW_TITLE[];
 extern const char default_level_path[];
 
 // player variables
-extern const float FOV;
+extern float FOV;
 
 // for other headers or cpp files
 extern float deltaTime;

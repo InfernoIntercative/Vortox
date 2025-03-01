@@ -2,27 +2,30 @@
 #include <cstdlib>
 
 // headers
-#include "../core/globals.hpp"
 #include "error.hpp"
 
-void info(const char *message, const char *log)
-{
+void info(const char *message, const char *log) {
     if (log)
         fprintf(stderr, "[INFO] %s: %s\n", message, log);
     else
         fprintf(stderr, "[INFO] %s\n", message);
 }
 
-void warn(const char *message, const char *log)
-{
+void okay(const char *message, const char *log) {
+    if (log)
+        fprintf(stderr, "[OK] %s: %s\n", message, log);
+    else
+        fprintf(stderr, "[OK] %s\n", message);
+}
+
+void warn(const char *message, const char *log) {
     if (log)
         fprintf(stderr, "[WARN] %s: %s\n", message, log);
     else
         fprintf(stderr, "[WARN] %s\n", message);
 }
 
-void critical(const char *message, const char *log)
-{
+void critical(const char *message, const char *log) {
     if (log)
         fprintf(stderr, "[CRITICAL] %s: %s\n", message, log);
     else

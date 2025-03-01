@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 // headers
-#include "../console/console.hpp"
 #include "mouse.hpp"
 
 // function to process mouse input and update camera direction

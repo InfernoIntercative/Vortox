@@ -1,7 +1,16 @@
 #pragma once
 
-extern const char *textVertexShaderSource;
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <GL/glew.h>
+#include <string>
 
-extern const char *textFragmentShaderSource;
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+extern const char *text_vertex_shader_source;
+extern const char *text_fragment_shader_source;
 
 void renderText(TTF_Font *font, const std::string &text, float x, float y, GLuint textShaderProgram);

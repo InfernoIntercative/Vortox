@@ -1,14 +1,12 @@
 #pragma once
 
-struct Wall
-{
+struct Wall {
     float x1, y1, z1;
     float x2, y2, z2;
     int neighbor;
 };
 
-struct Sector
-{
+struct Sector {
     int id;
     int startWall;
     int wallCount;
@@ -16,8 +14,7 @@ struct Sector
     float ceiling;
 };
 
-struct Spawn
-{
+struct Spawn {
     float x, y, size;
-    float color[3]; // RGB
+    float color[3]; // this support rgb
 };

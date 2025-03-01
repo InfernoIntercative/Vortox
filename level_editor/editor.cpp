@@ -15,7 +15,6 @@
 #include "../lib/imgui/imgui_impl_opengl3.h"
 #include "editor.hpp"
 
-// Variáveis globais para a HUD
 static char gTextureInput[256];
 static char gLevelNameInput[256];
 
@@ -23,7 +22,7 @@ bool snapToGrid = false;
 bool snapSpawnToGrid = false;
 bool showEndpoints = false;
 bool showSpawnPoint = true;
-float globalWallThickness = 2.0f; // Slider global de espessura
+float globalWallThickness = 2.0f;
 
 struct Point2D
 {
@@ -60,7 +59,7 @@ double calculateDistance(double px, double py, double ax, double ay, double bx, 
     return std::sqrt((px - projX) * (px - projX) + (py - projY) * (py - projY));
 }
 
-// Helper para rotacionar um ponto em torno de um centro (ângulo em radianos)
+
 Point2D rotatePoint(const Point2D &p, const Point2D &center, double angle)
 {
     double s = std::sin(angle);
@@ -72,12 +71,12 @@ Point2D rotatePoint(const Point2D &p, const Point2D &center, double angle)
     return {center.x + rotatedX, center.y + rotatedY};
 }
 
-// Função para salvar screenshot (caso precise)
+
 void SaveScreenshot(const char *filename, int width, int height)
 {
     std::vector<unsigned char> pixels(width * height * 4);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-    // Inverte verticalmente
+
     for (int j = 0; j < height / 2; j++)
     {
         for (int i = 0; i < width * 4; i++)
@@ -198,7 +197,7 @@ int main(int argc, char *argv[])
     ImU32 currentBgColor = bgColorOptions[currentBgIndex];
     std::string activeTool = "Drawing";
 
-    const double rotationIncrement = 5.0 * M_PI / 180.0; // 5 graus em radianos
+    const double rotationIncrement = 5.0 * M_PI / 180.0;
 
     bool G_Running = true;
     SDL_Event event;
@@ -213,10 +212,10 @@ int main(int argc, char *argv[])
                 G_Running = false;
             }
 
-            // Se o ImGui está capturando o mouse, ignoramos inputs do editor
+
             bool hudActive = io.WantCaptureMouse || io.WantCaptureKeyboard;
 
-            // Processa clique esquerdo para mover spawn (somente se não estiver na HUD)
+
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT && !io.WantCaptureMouse)
             {
                 int wx = static_cast<int>(event.button.x / viewZoom - viewOffsetX);
@@ -303,7 +302,7 @@ int main(int argc, char *argv[])
                             walls[selectedWall].end.x = initialWallEnd.x + dx;
                             walls[selectedWall].end.y = initialWallEnd.y + dy;
                         }
-                        // Snap de endpoint se próximo a outro
+
                         const int snapTolerance = 10;
                         Point2D &movingPoint = (whichEndpoint == 0) ? walls[selectedWall].start : walls[selectedWall].end;
                         for (size_t i = 0; i < walls.size(); i++)
@@ -335,7 +334,7 @@ int main(int argc, char *argv[])
                 viewOffsetY += (my / viewZoom - my / oldZoom);
             }
 
-            // Processa clique do mouse para desenho/seleção (somente se não estiver na HUD)
+
             if (event.type == SDL_MOUSEBUTTONDOWN && !io.WantCaptureMouse)
             {
                 if (event.button.button == SDL_BUTTON_RIGHT)
@@ -430,7 +429,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            // Processa keys somente se o ImGui não estiver capturando
+
             if (event.type == SDL_KEYDOWN && !io.WantCaptureKeyboard)
             {
                 switch (event.key.keysym.sym)
@@ -476,7 +475,7 @@ int main(int argc, char *argv[])
                         undoStack.pop_back();
                     }
                     break;
-                // Rotaciona parede com Q e E
+
                 case SDLK_q:
                     if (selectionMode && selectedWall != -1)
                     {
@@ -523,7 +522,7 @@ int main(int argc, char *argv[])
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        // Janela da HUD
+
         if (hudVisible)
         {
             ImGui::Begin("HUD");
@@ -557,7 +556,7 @@ int main(int argc, char *argv[])
                     }
                     fout << "\n[TEXTURES]\n";
                     fout << "1=" << textureFilePath << "\n";
-                    // Se houver spawn, salva também
+
                     if (spawnCreated)
                     {
                         fout << "\n[SPAWN]\n";
@@ -572,6 +571,58 @@ int main(int argc, char *argv[])
                 else
                 {
                     std::printf("Failed to open file: %s\n", saveFile.c_str());
+                }
+            }
+            if (ImGui::Button("Load Level"))
+            {
+                std::ifstream fin(gLevelNameInput);
+                if (!fin.is_open())
+                {
+                    std::printf("Failed to open %s\n", gLevelNameInput);
+                }
+                else
+                {
+                    walls.clear();
+                    std::string line;
+                    bool wallSectionFound = false;
+                    while (std::getline(fin, line))
+                    {
+                        if (line.find("[WALL]") != std::string::npos)
+                        {
+                            wallSectionFound = true;
+                            break;
+                        }
+                    }
+                    if (!wallSectionFound)
+                    {
+                        std::cout << "No [WALL] section found in file." << std::endl;
+                    }
+                    else
+                    {
+                        while (std::getline(fin, line))
+                        {
+                            if (line.empty())
+                                continue;
+                            if (line[-1] == '[')
+                                break;
+                            std::istringstream iss(line);
+                            double sx, sy, ex, ey;
+                            int fl;
+                            if (!(iss >> sx >> sy >> ex >> ey >> fl))
+                                continue;
+                            LineWall lw;
+                            lw.start.x = static_cast<int>(sx / levelScaleFactor);
+                            lw.start.y = static_cast<int>(sy / levelScaleFactor);
+                            lw.end.x = static_cast<int>(ex / levelScaleFactor);
+                            lw.end.y = static_cast<int>(ey / levelScaleFactor);
+                            lw.flags = fl;
+                            lw.textureID = 0;
+                            lw.color = wallColorOptions[-1];
+                            lw.thickness = newWallThickness;
+                            walls.push_back(lw);
+                        }
+                        std::cout << "Loaded " << walls.size() << " walls from level.xym" << std::endl;
+                    }
                 }
             }
             ImGui::InputFloat("Ceiling Height", &ceilingHeight, 0.1f, 1.0f, "%.2f");
@@ -593,7 +644,7 @@ int main(int argc, char *argv[])
             }
             ImGui::InputFloat("New Wall Thickness", &newWallThickness, 0.1f, 1.0f, "%.2f");
 
-            // Features extras
+
             ImGui::Checkbox("Snap to Grid", &snapToGrid);
             ImGui::Checkbox("Snap Spawn to Grid", &snapSpawnToGrid);
             ImGui::SliderInt("Grid Spacing", &gridSpacing, 5, 100);
@@ -647,10 +698,6 @@ int main(int argc, char *argv[])
                 viewOffsetX = 0;
                 viewOffsetY = 0;
             }
-            if (ImGui::Button("Toggle Grid"))
-            {
-                gridVisible = !gridVisible;
-            }
             if (ImGui::Button("Duplicate Wall"))
             {
                 if (selectionMode && selectedWall != -1)
@@ -667,68 +714,11 @@ int main(int argc, char *argv[])
             {
                 walls.clear();
             }
-            if (ImGui::Button("Load Level"))
-            {
-                std::ifstream fin("level.xym");
-                if (!fin.is_open())
-                {
-                    std::printf("Failed to open level.xym\n");
-                }
-                else
-                {
-                    walls.clear();
-                    std::string line;
-                    bool wallSectionFound = false;
-                    while (std::getline(fin, line))
-                    {
-                        if (line.find("[WALL]") != std::string::npos)
-                        {
-                            wallSectionFound = true;
-                            break;
-                        }
-                    }
-                    if (!wallSectionFound)
-                    {
-                        std::cout << "No [WALL] section found in file." << std::endl;
-                    }
-                    else
-                    {
-                        while (std::getline(fin, line))
-                        {
-                            if (line.empty())
-                                continue;
-                            if (line[0] == '[')
-                                break;
-                            std::istringstream iss(line);
-                            double sx, sy, ex, ey;
-                            int fl;
-                            if (!(iss >> sx >> sy >> ex >> ey >> fl))
-                                continue;
-                            LineWall lw;
-                            lw.start.x = static_cast<int>(sx / levelScaleFactor);
-                            lw.start.y = static_cast<int>(sy / levelScaleFactor);
-                            lw.end.x = static_cast<int>(ex / levelScaleFactor);
-                            lw.end.y = static_cast<int>(ey / levelScaleFactor);
-                            lw.flags = fl;
-                            lw.textureID = 1;
-                            lw.color = wallColorOptions[0];
-                            lw.thickness = newWallThickness;
-                            walls.push_back(lw);
-                        }
-                        std::cout << "Loaded " << walls.size() << " walls from level.xym" << std::endl;
-                    }
-                }
-            }
             if (ImGui::Button("Change Background Color"))
             {
                 currentBgIndex = (currentBgIndex + 1) % bgColorOptions.size();
                 currentBgColor = bgColorOptions[currentBgIndex];
             }
-            if (ImGui::Button("Toggle HUD"))
-            {
-                hudVisible = !hudVisible;
-            }
-            // Botão para criar spawn
             if (ImGui::Button("Create Spawn Point"))
             {
                 spawnCreated = true;
@@ -747,49 +737,7 @@ int main(int argc, char *argv[])
             ImGui::ColorEdit3("Spawn Color", spawnColor);
             ImGui::End();
         }
-
-        // Janela 3D View
-        if (ImGui::Begin("3D View"))
-        {
-            ImVec2 viewSize = ImGui::GetContentRegionAvail();
-
-            // Salva viewport atual e configura nova viewport para 3D
-            glPushAttrib(GL_VIEWPORT_BIT);
-            glViewport(0, 0, (int)viewSize.x, (int)(viewSize.y > 0 ? viewSize.y : 1.0f));
-
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            gluPerspective(45.0, viewSize.x / (viewSize.y > 0 ? viewSize.y : 1.0f), 0.1, 1000.0);
-
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-            // Configura câmera (exemplo simples)
-            gluLookAt(0, -50, 50, 0, 0, 0, 0, 0, 1);
-
-            // Renderiza as "paredes" em 3D (apenas linhas representando floor e ceiling)
-            glColor3f(1, 1, 1);
-            glLineWidth(2.0f);
-            for (const auto &wall : walls)
-            {
-                glBegin(GL_LINES);
-                glVertex3f(wall.start.x * levelScaleFactor, wall.start.y * levelScaleFactor, floorHeight);
-                glVertex3f(wall.end.x * levelScaleFactor, wall.end.y * levelScaleFactor, floorHeight);
-
-                glVertex3f(wall.start.x * levelScaleFactor, wall.start.y * levelScaleFactor, ceilingHeight);
-                glVertex3f(wall.end.x * levelScaleFactor, wall.end.y * levelScaleFactor, ceilingHeight);
-                glEnd();
-            }
-
-            // Restaura as matrizes e viewport
-            glPopMatrix();
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-            glMatrixMode(GL_MODELVIEW);
-            glPopAttrib();
-        }
-        ImGui::End(); // Sempre chama End() para evitar erro de estado
+       
 
         int displayW = static_cast<int>(io.DisplaySize.x);
         int displayH = static_cast<int>(io.DisplaySize.y);
@@ -818,7 +766,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Renderiza paredes na view 2D
+
         for (size_t i = 0; i < walls.size(); i++)
         {
             int x1 = static_cast<int>((walls[i].start.x + viewOffsetX) * viewZoom);

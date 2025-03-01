@@ -1,5 +1,6 @@
 // sdl2
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
@@ -31,7 +32,6 @@
 // player headers
 #include "../player/input.hpp"
 #include "../player/keyboard.hpp"
-#include "../player/collision.hpp"
 #include "../player/mouse.hpp"
 
 // error handler
@@ -100,11 +100,11 @@ std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors, const 
             float texTL[2] = {0.0f, wallHeight / textureScale};
 
             vertices.insert(vertices.end(), {bl[0], bl[1], bl[2], texBL[0], texBL[1],
-                                             br[0], br[1], br[2], texBR[0], texBR[1],
-                                             tr[0], tr[1], tr[2], texTR[0], texTR[1]});
+                br[0], br[1], br[2], texBR[0], texBR[1],
+                tr[0], tr[1], tr[2], texTR[0], texTR[1]});
             vertices.insert(vertices.end(), {bl[0], bl[1], bl[2], texBL[0], texBL[1],
-                                             tr[0], tr[1], tr[2], texTR[0], texTR[1],
-                                             tl[0], tl[1], tl[2], texTL[0], texTL[1]});
+                tr[0], tr[1], tr[2], texTR[0], texTR[1],
+                tl[0], tl[1], tl[2], texTL[0], texTL[1]});
         }
     }
     return vertices;
@@ -143,6 +143,15 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
     {
         G_Running = false;
     }
+    else if (token == "close")
+    {
+        consoleActive = false;
+    }
+    else if (token == "fly")
+    {
+        M_fly = !M_fly;
+        commandInput = "";
+    }
     else if (token == "load")
     {
 
@@ -162,7 +171,7 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
                 glBufferData(GL_ARRAY_BUFFER, levelVertices.size() * sizeof(float), levelVertices.data(), GL_STATIC_DRAW);
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 textureLevel = newTextureMap;
-                std::cout << "Map loaded: " << filename << std::endl;
+                info("Map loaded", filename.c_str());
             }
             else
             {
@@ -207,21 +216,6 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
     {
         paused = !paused;
         std::cout << "Paused: " << (paused ? "true" : "false") << std::endl;
-        commandInput = "";
-    }
-    else if (token == "help")
-    {
-        std::cout << "Available commands:\n"
-                  << "clear - clear command input\n"
-                  << "exit/quit - exit game\n"
-                  << "load <filename> - load map\n"
-                  << "reload - reload default map\n"
-                  << "fullscreen - toggle fullscreen\n"
-                  << "pause - toggle pause\n"
-                  << "help - show this help\n"
-                  << "sensitivity <value> - set mouse sensitivity\n"
-                  << "volume <value> - set music volume (0-128)\n"
-                  << "texture <key> - set wall texture key\n";
         commandInput = "";
     }
     else if (token == "sens")
@@ -300,6 +294,7 @@ int init()
     }
     return 0;
 }
+
 
 // render scene bruh
 void render(GLuint shaderProgram, GLint ourTextureLoc,
@@ -395,6 +390,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    // TODO: musiclevel is only for tests, musiclevel will be on the map
     const char *musicLevel = "resources/musics/demo.ogg";
     Mix_Music *music = Mix_LoadMUS(musicLevel);
     if (!music)
@@ -413,8 +409,9 @@ int main(int argc, char *argv[])
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
-    GLuint consoleShaderProgram = createConsoleShaderProgram();
-    GLuint textShaderProgram = createTextShaderProgram();
+    GLuint consoleShaderProgram = createShaderProgram(console_vertex_shader_source, console_fragment_shader_source);
+    GLuint textShaderProgram = createShaderProgram(text_vertex_shader_source, text_fragment_shader_source);
+
     if (shaderProgram == 0 || consoleShaderProgram == 0 || textShaderProgram == 0)
     {
         critical("Failed to create shader programs.");
@@ -432,6 +429,7 @@ int main(int argc, char *argv[])
     std::vector<Sector> sectors;
     std::vector<Wall> walls;
     std::unordered_map<std::string, GLuint> textureLevel;
+
     if (!L_loadLevel(default_level_path, sectors, walls, textureLevel, playerSpawn))
     {
         SDL_GL_DeleteContext(context);
@@ -463,278 +461,273 @@ int main(int argc, char *argv[])
         0.0f, 0.0f,
         static_cast<float>(WINDOW_WIDTH), static_cast<float>(consoleHeight),
         0.0f, static_cast<float>(consoleHeight)};
-    GLuint consoleVAO, consoleVBO;
-    glGenVertexArrays(1, &consoleVAO);
-    glGenBuffers(1, &consoleVBO);
-    glBindVertexArray(consoleVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, consoleVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(consoleVertices), consoleVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+        GLuint consoleVAO, consoleVBO;
+        glGenVertexArrays(1, &consoleVAO);
+        glGenBuffers(1, &consoleVBO);
+        glBindVertexArray(consoleVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, consoleVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(consoleVertices), consoleVertices, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
 
-    SDL_GL_SetSwapInterval(1);
+        SDL_GL_SetSwapInterval(1);
 
-    TTF_Font *consoleFont = TTF_OpenFont("resources/fonts/console.ttf", 16);
-    if (!consoleFont)
-    {
-        warn("Failed to load font", TTF_GetError());
-    }
-
-    extern std::string commandInput;
-    extern bool consoleActive;
-    extern float consoleAnim;
-    extern const float consoleAnimSpeed;
-
-    // head bob effect variables
-    float headBobTimer = 0.0f;
-    const float bobbingSpeed = 10.0f;
-    const float bobbingAmplitude = 0.10f;
-
-    G_Running = true;
-    SDL_Event event;
-    Uint32 lastTime = SDL_GetTicks();
-    float fpsTimer = 0.0f;
-    int fpsCount = 0;
-    float currentFPS = 0.0f;
-
-    extern glm::vec3 cameraPos;
-    extern glm::vec3 cameraFront;
-    extern glm::vec3 cameraUp;
-
-    SDL_StartTextInput();
-
-    // main loop
-    while (G_Running)
-    {
-        // update relative mouse mode
-        if (consoleActive && currentRelativeMode)
+        TTF_Font *consoleFont = TTF_OpenFont("resources/fonts/console.ttf", 16);
+        if (!consoleFont)
         {
-            SDL_SetRelativeMouseMode(SDL_FALSE);
-            currentRelativeMode = false;
-        }
-        else if (!consoleActive && !currentRelativeMode)
-        {
-            SDL_SetRelativeMouseMode(SDL_TRUE);
-            currentRelativeMode = true;
+            warn("Failed to load font", TTF_GetError());
         }
 
-        Uint32 currentTime = SDL_GetTicks();
-        float deltaTime = (currentTime - lastTime) / 1000.0f;
-        lastTime = currentTime;
+        extern std::string commandInput;
+        extern bool consoleActive;
+        extern float consoleAnim;
+        extern const float consoleAnimSpeed;
 
-        fpsTimer += deltaTime;
-        fpsCount++;
-        if (fpsTimer >= 1.0f)
-        {
-            currentFPS = fpsCount / fpsTimer;
-            fpsCount = 0;
-            fpsTimer = 0.0f;
-        }
+        // head bob effect variables
+        float headBobTimer = 0.0f;
+        const float bobbingSpeed = 10.0f;
+        const float bobbingAmplitude = 0.10f;
 
-        // process events
-        while (SDL_PollEvent(&event))
+        G_Running = true;
+        SDL_Event event;
+        Uint32 lastTime = SDL_GetTicks();
+        float fpsTimer = 0.0f;
+        int fpsCount = 0;
+        float currentFPS = 0.0f;
+
+        extern glm::vec3 cameraPos;
+        extern glm::vec3 cameraFront;
+        extern glm::vec3 cameraUp;
+
+        SDL_StartTextInput();
+
+        // main loop
+        while (G_Running)
         {
-            switch (event.type)
+            // update relative mouse mode
+            if (consoleActive && currentRelativeMode)
             {
-            case SDL_QUIT:
-                G_Running = false;
-                break;
-            case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_QUOTE)
-                    consoleActive = true;
-                else if (event.key.keysym.sym == SDLK_ESCAPE)
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+                currentRelativeMode = false;
+            }
+            else if (!consoleActive && !currentRelativeMode)
+            {
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+                currentRelativeMode = true;
+            }
+
+            Uint32 currentTime = SDL_GetTicks();
+            float deltaTime = (currentTime - lastTime) / 1000.0f;
+            lastTime = currentTime;
+
+            fpsTimer += deltaTime;
+            fpsCount++;
+            if (fpsTimer >= 1.0f)
+            {
+                currentFPS = fpsCount / fpsTimer;
+                fpsCount = 0;
+                fpsTimer = 0.0f;
+            }
+
+            // process events
+            while (SDL_PollEvent(&event))
+            {
+                switch (event.type)
                 {
-                    if (consoleActive)
-                        consoleActive = false;
-                    else
+                    case SDL_QUIT:
                         G_Running = false;
-                }
-                else if (consoleActive)
-                {
-                    if (event.key.keysym.sym == SDLK_BACKSPACE && !commandInput.empty())
-                        commandInput.pop_back();
-                    else if (event.key.keysym.sym == SDLK_RETURN)
+                        break;
+                    case SDL_KEYDOWN:
+                        if (event.key.keysym.sym == SDLK_QUOTE)
+                            consoleActive = true;
+                        if (event.key.keysym.sym == SDLK_ESCAPE)
+                            consoleActive = false;
+                    else if (consoleActive)
                     {
-                        processCommand(commandInput, G_Running, commandInput, sectors, walls, levelVertices,
-                                       VBO, textureLevel, G_Paused, M_MouseSensitivity, S_CurrentVolume,
-                                       R_CurrentTextureKey, window, C_CommandHistory, C_HistoryIndex);
-                        mapCenter = computeLevelCenter(walls);
-                    }
-                    else if (event.key.keysym.sym == SDLK_UP)
-                    {
-                        if (!C_CommandHistory.empty() && C_HistoryIndex > 0)
+                        if (event.key.keysym.sym == SDLK_BACKSPACE && !commandInput.empty())
+                            commandInput.pop_back();
+                        else if (event.key.keysym.sym == SDLK_RETURN)
                         {
-                            C_HistoryIndex--;
-                            commandInput = C_CommandHistory[C_HistoryIndex];
+                            processCommand(commandInput, G_Running, commandInput, sectors, walls, levelVertices,
+                                           VBO, textureLevel, G_Paused, M_MouseSensitivity, S_CurrentVolume,
+                                           R_CurrentTextureKey, window, C_CommandHistory, C_HistoryIndex);
+                            mapCenter = computeLevelCenter(walls);
+                        }
+                        else if (event.key.keysym.sym == SDLK_UP)
+                        {
+                            if (!C_CommandHistory.empty() && C_HistoryIndex > 0)
+                            {
+                                C_HistoryIndex--;
+                                commandInput = C_CommandHistory[C_HistoryIndex];
+                            }
+                        }
+                        else if (event.key.keysym.sym == SDLK_DOWN)
+                        {
+                            if (!C_CommandHistory.empty() &&
+                                C_HistoryIndex < static_cast<int>(C_CommandHistory.size()) - 1)
+                            {
+                                C_HistoryIndex++;
+                                commandInput = C_CommandHistory[C_HistoryIndex];
+                            }
+                            else
+                            {
+                                commandInput.clear();
+                            }
                         }
                     }
-                    else if (event.key.keysym.sym == SDLK_DOWN)
-                    {
-                        if (!C_CommandHistory.empty() &&
-                            C_HistoryIndex < static_cast<int>(C_CommandHistory.size()) - 1)
+                    break;
+                    case SDL_TEXTINPUT:
+                        if (consoleActive)
+                            commandInput += event.text.text;
+                    break;
+                    case SDL_MOUSEMOTION:
+                        if (!consoleActive)
                         {
-                            C_HistoryIndex++;
-                            commandInput = C_CommandHistory[C_HistoryIndex];
+                            M_processMouseInput(
+                                event.motion.xrel,
+                                event.motion.yrel,
+                                M_pitch,
+                                M_yaw,
+                                M_MouseSensitivity,
+                                cameraFront);
                         }
-                        else
-                        {
-                            commandInput.clear();
-                        }
-                    }
-                }
-                break;
-            case SDL_TEXTINPUT:
-                if (consoleActive)
-                    commandInput += event.text.text;
-                break;
-            case SDL_MOUSEMOTION:
-                if (!consoleActive)
-                {
-                    M_processMouseInput(
-                        event.motion.xrel,
-                        event.motion.yrel,
-                        M_pitch,
-                        M_yaw,
-                        M_MouseSensitivity,
-                        cameraFront);
-                }
-                break;
-            default:
-                break;
-            }
-        }
-
-        // continuous movement using key states
-        if (!consoleActive)
-        {
-            const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
-            glm::vec3 forwardDirection = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
-            glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, cameraUp));
-
-            if (keyStates[SDL_SCANCODE_W])
-            {
-                M_move_forward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
-            }
-            if (keyStates[SDL_SCANCODE_S])
-            {
-                M_move_backward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
-            }
-            if (keyStates[SDL_SCANCODE_A])
-            {
-                M_move_left(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
-            }
-            if (keyStates[SDL_SCANCODE_D])
-            {
-                M_move_right(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
-            }
-
-            if (M_fly) // enable flying movement
-            {
-                if (keyStates[SDL_SCANCODE_SPACE])
-                {
-                    cameraPos.y += M_cameraSpeed * deltaTime;
-                }
-                if (keyStates[SDL_SCANCODE_LCTRL])
-                {
-                    cameraPos.y -= M_cameraSpeed * deltaTime;
+                        break;
+                    default:
+                        break;
                 }
             }
-        }
 
-        // --- head Bob Calculation ---
-        // check if movement keys are pressed
-        float headBobOffset = 0.0f;
-        if (!consoleActive)
-        {
-            bool isMoving = false;
+            if (!consoleActive)
             {
                 const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
-                if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S] ||
-                    keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D])
+                glm::vec3 forwardDirection = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
+                glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, cameraUp));
+
+                if (keyStates[SDL_SCANCODE_W])
                 {
-                    isMoving = true;
+                    M_move_forward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
+                }
+                if (keyStates[SDL_SCANCODE_S])
+                {
+                    M_move_backward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
+                }
+                if (keyStates[SDL_SCANCODE_A])
+                {
+                    M_move_left(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
+                }
+                if (keyStates[SDL_SCANCODE_D])
+                {
+                    M_move_right(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
+                }
+
+                if (M_fly) // enable flying movement
+                {
+                    if (keyStates[SDL_SCANCODE_SPACE])
+                    {
+                        cameraPos.y += M_cameraSpeed * deltaTime;
+                    }
+                    if (keyStates[SDL_SCANCODE_LCTRL])
+                    {
+                        cameraPos.y -= M_cameraSpeed * deltaTime;
+                    }
                 }
             }
 
-            if (isMoving)
-            {
-                headBobTimer += deltaTime * bobbingSpeed;
-                headBobOffset = sin(headBobTimer) * bobbingAmplitude;
-            }
-            else
-            {
-                headBobTimer = 0.0f;
-            }
-        }
 
-        // --- end Head Bob Calculation ---
+            // --- head Bob Calculation ---
+            // check if movement keys are pressed
+            float headBobOffset = 0.0f;
+            if (!consoleActive)
+            {
+                bool isMoving = false;
+                {
+                    const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
+                    if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S] ||
+                        keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D])
+                    {
+                        isMoving = true;
+                    }
+                }
 
-        // animate console overlay
-        float targetAnim = consoleActive ? 1.0f : 0.0f;
-        if (consoleAnim < targetAnim)
-        {
-            consoleAnim += consoleAnimSpeed * deltaTime;
-            if (consoleAnim > targetAnim)
-                consoleAnim = targetAnim;
-        }
-        else if (consoleAnim > targetAnim)
-        {
-            consoleAnim -= consoleAnimSpeed * deltaTime;
+                if (isMoving)
+                {
+                    headBobTimer += deltaTime * bobbingSpeed;
+                    headBobOffset = sin(headBobTimer) * bobbingAmplitude;
+                }
+                else
+                {
+                    headBobTimer = 0.0f;
+                }
+            }
+
+            // --- end Head Bob Calculation ---
+
+            // animate console overlay
+            float targetAnim = consoleActive ? 1.0f : 0.0f;
             if (consoleAnim < targetAnim)
-                consoleAnim = targetAnim;
+            {
+                consoleAnim += consoleAnimSpeed * deltaTime;
+                if (consoleAnim > targetAnim)
+                    consoleAnim = targetAnim;
+            }
+            else if (consoleAnim > targetAnim)
+            {
+                consoleAnim -= consoleAnimSpeed * deltaTime;
+                if (consoleAnim < targetAnim)
+                    consoleAnim = targetAnim;
+            }
+
+            // Pass headBobOffset to the render function
+            render(shaderProgram, ourTextureLoc, textureLevel, mapCenter,
+                   modelLoc, viewLoc, projLoc, VAO, levelVertices, headBobOffset);
+
+            // render console overlay if active
+            if (consoleAnim > 0.0f)
+            {
+                glUseProgram(consoleShaderProgram);
+                glm::mat4 ortho = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH),
+                                             static_cast<float>(WINDOW_HEIGHT), 0.0f);
+                glUniformMatrix4fv(consoleProjLoc, 1, GL_FALSE, glm::value_ptr(ortho));
+                glm::mat4 consoleModel = glm::translate(glm::mat4(1.0f),
+                                                        glm::vec3(0.0f, -consoleHeight + consoleAnim * consoleHeight, 0.0f));
+                glUniformMatrix4fv(consoleModelLoc, 1, GL_FALSE, glm::value_ptr(consoleModel));
+                glUniform4f(consoleColorLoc, 0.0f, 0.0f, 0.0f, 0.8f);
+
+                glBindVertexArray(consoleVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+
+                renderText(consoleFont, "> " + commandInput, 10.0f, 10.0f, textShaderProgram);
+            }
+
+            // render FPS and pause indicator
+            renderText(consoleFont, "FPS: " + std::to_string(static_cast<int>(currentFPS)),
+                       WINDOW_WIDTH - 100, 10.0f, textShaderProgram);
+            if (G_Paused)
+                renderText(consoleFont, "PAUSED", WINDOW_WIDTH / 2 - 50, 50, textShaderProgram);
+
+            SDL_GL_SwapWindow(window);
         }
 
-        // Pass headBobOffset to the render function
-        render(shaderProgram, ourTextureLoc, textureLevel, mapCenter,
-               modelLoc, viewLoc, projLoc, VAO, levelVertices, headBobOffset);
+        // cleanup
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteProgram(shaderProgram);
+        glDeleteVertexArrays(1, &consoleVAO);
+        glDeleteBuffers(1, &consoleVBO);
+        glDeleteProgram(consoleShaderProgram);
+        glDeleteProgram(textShaderProgram);
 
-        // render console overlay if active
-        if (consoleAnim > 0.0f)
-        {
-            glUseProgram(consoleShaderProgram);
-            glm::mat4 ortho = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH),
-                                         static_cast<float>(WINDOW_HEIGHT), 0.0f);
-            glUniformMatrix4fv(consoleProjLoc, 1, GL_FALSE, glm::value_ptr(ortho));
-            glm::mat4 consoleModel = glm::translate(glm::mat4(1.0f),
-                                                    glm::vec3(0.0f, -consoleHeight + consoleAnim * consoleHeight, 0.0f));
-            glUniformMatrix4fv(consoleModelLoc, 1, GL_FALSE, glm::value_ptr(consoleModel));
-            glUniform4f(consoleColorLoc, 0.0f, 0.0f, 0.0f, 0.8f);
+        TTF_CloseFont(consoleFont);
+        TTF_Quit();
+        IMG_Quit();
+        SDL_StopTextInput();
+        Mix_FreeMusic(music);
+        SDL_GL_DeleteContext(context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
 
-            glBindVertexArray(consoleVAO);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glBindVertexArray(0);
-
-            renderText(consoleFont, "> " + commandInput, 10.0f, 10.0f, textShaderProgram);
-        }
-
-        // render FPS and pause indicator
-        renderText(consoleFont, "FPS: " + std::to_string(static_cast<int>(currentFPS)),
-                   WINDOW_WIDTH - 100, 10.0f, textShaderProgram);
-        if (G_Paused)
-            renderText(consoleFont, "PAUSED", WINDOW_WIDTH / 2 - 50, 50, textShaderProgram);
-
-        SDL_GL_SwapWindow(window);
-    }
-
-    // cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
-    glDeleteVertexArrays(1, &consoleVAO);
-    glDeleteBuffers(1, &consoleVBO);
-    glDeleteProgram(consoleShaderProgram);
-    glDeleteProgram(textShaderProgram);
-
-    TTF_CloseFont(consoleFont);
-    TTF_Quit();
-    IMG_Quit();
-    SDL_StopTextInput();
-    Mix_FreeMusic(music);
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-
-    return 0;
+        return 0;
 }

@@ -12,4 +12,4 @@ float M_pitch = 0.0f;
 
 float M_MouseSensitivity = 0.01f;
 
-bool M_fly = true;
+bool M_fly = false;
