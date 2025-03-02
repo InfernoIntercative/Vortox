@@ -1,10 +1,6 @@
 # Ignore the compiled Xylon Engine, Fuck you if you want the compiled Xylon Engine
 bin/
 obj/
-CMakeFiles/
-./cmake_install.cmake
-./CMakeCache.txt
-./Makefile
 build/
 
 # IDE Files

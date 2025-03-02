@@ -1,9 +1,11 @@
+#include <iostream>
+#include <stdio.h>
+
+// headers
 #include "fonts.hpp"
 #include "../core/globals.hpp"
 #include "../shaders/shaders.hpp"
-
-#include <iostream>
-#include <stdio.h>
+#include "../errors/error.hpp"
 
 // vertex Shader
 const char *text_vertex_shader_source = R"(

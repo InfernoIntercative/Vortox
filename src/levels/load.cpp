@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <cstring>
 
 // opengl
 #include <GL/glew.h>
@@ -53,7 +53,7 @@ bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector
             currentSection = SECTOR;
             continue;
         }
-        else if (token == "[WALL]") {            
+        else if (token == "[WALL]") {
             currentSection = WALL;
             continue;
         }

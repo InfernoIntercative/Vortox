@@ -1,7 +1,9 @@
 // sdl2
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_error.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 
@@ -44,8 +46,7 @@ int C_HistoryIndex = -1;
 
 Spawn playerSpawn;
 
-glm::vec3 computeLevelCenter(const std::vector<Wall> &walls)
-{
+glm::vec3 computeLevelCenter(const std::vector<Wall> &walls) {
     if (walls.empty())
         return glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -53,8 +54,7 @@ glm::vec3 computeLevelCenter(const std::vector<Wall> &walls)
     float minY = walls[0].y1, maxY = walls[0].y1;
     float minZ = walls[0].z1, maxZ = walls[0].z1;
 
-    for (const Wall &w : walls)
-    {
+    for (const Wall &w : walls) {
         minX = std::min({minX, w.x1, w.x2});
         maxX = std::max({maxX, w.x1, w.x2});
         minY = std::min({minY, w.y1, w.y2});
@@ -66,8 +66,7 @@ glm::vec3 computeLevelCenter(const std::vector<Wall> &walls)
     return glm::vec3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, (minZ + maxZ) * 0.5f);
 }
 
-std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors, const std::vector<Wall> &walls)
-{
+std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors, const std::vector<Wall> &walls) {
     std::vector<float> vertices;
     size_t totalTriangles = 0;
     for (const Sector &sector : sectors)
@@ -76,10 +75,8 @@ std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors, const 
 
     const float textureScale = 2.5f;
 
-    for (const Sector &sector : sectors)
-    {
-        for (int i = 0; i < sector.wallCount; ++i)
-        {
+    for (const Sector &sector : sectors) {
+        for (int i = 0; i < sector.wallCount; ++i) {
             int wallIndex = sector.startWall + i;
             if (wallIndex < 0 || wallIndex >= walls.size())
                 continue;
@@ -100,21 +97,21 @@ std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors, const 
             float texTL[2] = {0.0f, wallHeight / textureScale};
 
             vertices.insert(vertices.end(), {bl[0], bl[1], bl[2], texBL[0], texBL[1],
-                br[0], br[1], br[2], texBR[0], texBR[1],
-                tr[0], tr[1], tr[2], texTR[0], texTR[1]});
+                                             br[0], br[1], br[2], texBR[0], texBR[1],
+                                             tr[0], tr[1], tr[2], texTR[0], texTR[1]});
             vertices.insert(vertices.end(), {bl[0], bl[1], bl[2], texBL[0], texBL[1],
-                tr[0], tr[1], tr[2], texTR[0], texTR[1],
-                tl[0], tl[1], tl[2], texTL[0], texTL[1]});
+                                             tr[0], tr[1], tr[2], texTR[0], texTR[1],
+                                             tl[0], tl[1], tl[2], texTL[0], texTL[1]});
         }
     }
     return vertices;
 }
 
-std::string vertexShaderSourceStr = readShaderFile("shaders/vertex_source.vert");
-const char *vertexShaderSource = vertexShaderSourceStr.c_str();
+std::string vertex_shader_source_STR = readShaderFile("shaders/vertex_source.vert");
+const char *vertex_shader_source = vertex_shader_source_STR.c_str();
 
-std::string fragmentShaderSourceStr = readShaderFile("shaders/fragment_source.frag");
-const char *fragmentShaderSource = fragmentShaderSourceStr.c_str();
+std::string fragment_shader_source_STR = readShaderFile("shaders/fragment_source.frag");
+const char *fragment_shader_source = fragment_shader_source_STR.c_str();
 
 void processCommand(const std::string &cmd, bool &G_Running, std::string &commandInput,
                     std::vector<Sector> &sectors, std::vector<Wall> &walls,
@@ -122,48 +119,39 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
                     std::unordered_map<std::string, GLuint> &textureLevel,
                     bool &paused, float &mouseSensitivity, int &currentVolume,
                     std::string &currentTextureKey, SDL_Window *window,
-                    std::vector<std::string> &commandHistory, int &historyIndex)
-{
+                    std::vector<std::string> &commandHistory, int &historyIndex) {
     std::istringstream iss(cmd);
     std::string token;
     iss >> token;
-    if (token.empty())
-    {
+    if (token.empty()) {
         commandInput = "";
         return;
     }
     commandHistory.push_back(cmd);
     historyIndex = commandHistory.size();
 
-    if (token == "clear")
-    {
+    if (token == "clear") {
         commandInput = "";
     }
-    else if (token == "exit" || token == "quit")
-    {
+    else if (token == "exit" || token == "quit") {
         G_Running = false;
     }
-    else if (token == "close")
-    {
+    else if (token == "close") {
         consoleActive = false;
     }
-    else if (token == "fly")
-    {
+    else if (token == "fly") {
         M_fly = !M_fly;
         commandInput = "";
     }
-    else if (token == "load")
-    {
+    else if (token == "load") {
 
         std::string filename;
         iss >> filename;
-        if (!filename.empty())
-        {
+        if (!filename.empty()) {
             std::vector<Sector> newSectors;
             std::vector<Wall> newWalls;
             std::unordered_map<std::string, GLuint> newTextureMap;
-            if (L_loadLevel(filename.c_str(), newSectors, newWalls, newTextureMap, playerSpawn))
-            {
+            if (L_loadLevel(filename.c_str(), newSectors, newWalls, newTextureMap, playerSpawn)) {
                 sectors = newSectors;
                 walls = newWalls;
                 levelVertices = buildLevelVertices(sectors, walls);
@@ -173,21 +161,17 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
                 textureLevel = newTextureMap;
                 info("Map loaded", filename.c_str());
             }
-            else
-            {
+            else {
                 warn("Failed to load map!");
             }
         }
         commandInput = "";
     }
-    else if (token == "reload")
-    {
-
+    else if (token == "reload") {
         std::vector<Sector> newSectors;
         std::vector<Wall> newWalls;
         std::unordered_map<std::string, GLuint> newTextureMap;
-        if (L_loadLevel(default_level_path, newSectors, newWalls, newTextureMap, playerSpawn))
-        {
+        if (L_loadLevel(WTF_map, newSectors, newWalls, newTextureMap, playerSpawn)) {
             sectors = newSectors;
             walls = newWalls;
             levelVertices = buildLevelVertices(sectors, walls);
@@ -195,16 +179,14 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
             glBufferData(GL_ARRAY_BUFFER, levelVertices.size() * sizeof(float), levelVertices.data(), GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             textureLevel = newTextureMap;
-            std::cout << "Map reloaded" << default_level_path << std::endl;
+            info("Map reloaded", WTF_map);
         }
-        else
-        {
-            warn("Failed to reload map", default_level_path);
+        else {
+            warn("Failed to reload map", WTF_map);
         }
         commandInput = "";
     }
-    else if (token == "fullscreen")
-    {
+    else if (token == "fullscreen") {
         Uint32 flags = SDL_GetWindowFlags(window);
         if (flags & SDL_WINDOW_FULLSCREEN)
             SDL_SetWindowFullscreen(window, 0);
@@ -212,49 +194,40 @@ void processCommand(const std::string &cmd, bool &G_Running, std::string &comman
             SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
         commandInput = "";
     }
-    else if (token == "pause")
-    {
+    else if (token == "pause") {
         paused = !paused;
         std::cout << "Paused: " << (paused ? "true" : "false") << std::endl;
         commandInput = "";
     }
-    else if (token == "sens")
-    {
+    else if (token == "sens") {
         float value;
-        if (iss >> value)
-        {
+        if (iss >> value) {
             mouseSensitivity = value;
-            std::cout << "Mouse sensitivity set to " << mouseSensitivity << std::endl;
+            info("Mouse sensitivity set to", std::to_string(mouseSensitivity).c_str());
         }
-        else
-        {
-            std::cerr << "Invalid sensitivity value." << std::endl;
+        else {
+            error("Invalid sensitivity value", std::to_string(value).c_str());
         }
         commandInput = "";
     }
-    else if (token == "volume")
-    {
+    else if (token == "volume") {
         int value;
-        if (iss >> value)
-        {
+        if (iss >> value) {
             currentVolume = std::max(0, std::min(128, value));
             Mix_VolumeMusic(currentVolume);
-            std::cout << "Volume set to " << currentVolume << std::endl;
+            info("Volume set to", std::to_string(currentVolume).c_str());
         }
-        else
-        {
-            std::cerr << "Invalid volume value." << std::endl;
+        else {
+            error("Invalid volume value", std::to_string(value).c_str());
         }
         commandInput = "";
     }
-    else
-    {
+    else {
         commandInput = "";
     }
 }
 
-int playMusic(const char *filePath)
-{
+int playMusic(const char *filePath) {
     Mix_Music *music = Mix_LoadMUS(filePath);
     if (!music)
     {
@@ -270,38 +243,35 @@ int playMusic(const char *filePath)
     return 0;
 }
 
-int init()
-{
+int init() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        printf("Failed to initialize SDL: %s\n", SDL_GetError());
+        critical("Failed to initialize SDL", SDL_GetError());
         return -1;
     }
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
     {
-        fprintf(stderr, "Failed to initialize audio: %s\n", Mix_GetError());
+        critical("Failed to initialize audio", Mix_GetError());
         return -1;
     }
     if (TTF_Init() < 0)
     {
-        fprintf(stderr, "Failed to initialize TTF: %s\n", TTF_GetError());
+        critical("Failed to initialize TTF", TTF_GetError());
         return -1;
     }
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
     {
-        std::cerr << "Failed to initialize SDL_image: " << IMG_GetError() << std::endl;
+        critical("Failed to initialize SDL_image", IMG_GetError());
         return -1;
     }
     return 0;
 }
 
-
 // render scene bruh
 void render(GLuint shaderProgram, GLint ourTextureLoc,
             std::unordered_map<std::string, GLuint> &textureLevel,
             glm::vec3 &mapCenter, GLint modelLoc, GLint viewLoc, GLint projLoc,
-            GLuint VAO, std::vector<float> &levelVertices, float headBobOffset)
-{
+            GLuint VAO, std::vector<float> &levelVertices, float M_headbob_offset) {
     // render scene
     glClearColor(0.15f, 0.35f, 0.50f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -317,7 +287,7 @@ void render(GLuint shaderProgram, GLint ourTextureLoc,
 
     // apply head bob offset to the camera's Y position
     glm::vec3 bobbedCameraPos = cameraPos;
-    bobbedCameraPos.y += headBobOffset;
+    bobbedCameraPos.y += M_headbob_offset;
 
     glm::mat4 view = glm::lookAt(bobbedCameraPos, bobbedCameraPos + cameraFront, cameraUp);
     glm::mat4 projection = glm::perspective(glm::radians(FOV),
@@ -332,8 +302,7 @@ void render(GLuint shaderProgram, GLint ourTextureLoc,
     glBindVertexArray(0);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
     // initialization
     if (init() < 0)
@@ -350,9 +319,8 @@ int main(int argc, char *argv[])
         SDL_WINDOWPOS_CENTERED,
         WINDOW_WIDTH, WINDOW_HEIGHT,
         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-    if (!window)
-    {
-        printf("Failed to create window: %s\n", SDL_GetError());
+    if (!window) {
+        critical("Failed to create window", SDL_GetError());
         SDL_Quit();
         return -1;
     }
@@ -361,9 +329,8 @@ int main(int argc, char *argv[])
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     SDL_Surface *iconSurface = IMG_Load("logo/window.png");
-    if (!iconSurface)
-    {
-        fprintf(stderr, "Failed to load window icon: %s\n", IMG_GetError());
+    if (!iconSurface) {
+        critical("Failed to load window icon", IMG_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return -1;
@@ -372,29 +339,26 @@ int main(int argc, char *argv[])
     SDL_FreeSurface(iconSurface);
 
     SDL_GLContext context = SDL_GL_CreateContext(window);
-    if (!context)
-    {
-        printf("Failed to create OpenGL context: %s\n", SDL_GetError());
+    if (!context) {
+        critical("Failed to create OpenGL context", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return -1;
     }
 
     glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-        printf("Failed to initialize GLEW!\n");
+    if (glewInit() != GLEW_OK) {
+        critical("Failed to initialize GLEW!");
         SDL_GL_DeleteContext(context);
         SDL_DestroyWindow(window);
         SDL_Quit();
         return -1;
     }
 
-    // TODO: musiclevel is only for tests, musiclevel will be on the map
+    // TEMP: musiclevel is only for tests, musiclevel will be on the map
     const char *musicLevel = "resources/musics/demo.ogg";
     Mix_Music *music = Mix_LoadMUS(musicLevel);
-    if (!music)
-    {
+    if (!music) {
         fprintf(stderr, "Failed to load music: %s\n", Mix_GetError());
         SDL_GL_DeleteContext(context);
         SDL_DestroyWindow(window);
@@ -408,12 +372,14 @@ int main(int argc, char *argv[])
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    GLuint shaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
+    // in older versions, each shader compilation had a unique function name.
+    // this caused unnecessary duplication across the codebase.
+    // now, we use a single function, "createShaderProgram," for all shaders.
+    GLuint shaderProgram = createShaderProgram(vertex_shader_source, fragment_shader_source);
     GLuint consoleShaderProgram = createShaderProgram(console_vertex_shader_source, console_fragment_shader_source);
     GLuint textShaderProgram = createShaderProgram(text_vertex_shader_source, text_fragment_shader_source);
 
-    if (shaderProgram == 0 || consoleShaderProgram == 0 || textShaderProgram == 0)
-    {
+    if (shaderProgram == 0 || consoleShaderProgram == 0 || textShaderProgram == 0) {
         critical("Failed to create shader programs.");
     }
 
@@ -430,8 +396,7 @@ int main(int argc, char *argv[])
     std::vector<Wall> walls;
     std::unordered_map<std::string, GLuint> textureLevel;
 
-    if (!L_loadLevel(default_level_path, sectors, walls, textureLevel, playerSpawn))
-    {
+    if (!L_loadLevel(default_level_path, sectors, walls, textureLevel, playerSpawn)) {
         SDL_GL_DeleteContext(context);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -461,273 +426,248 @@ int main(int argc, char *argv[])
         0.0f, 0.0f,
         static_cast<float>(WINDOW_WIDTH), static_cast<float>(consoleHeight),
         0.0f, static_cast<float>(consoleHeight)};
-        GLuint consoleVAO, consoleVBO;
-        glGenVertexArrays(1, &consoleVAO);
-        glGenBuffers(1, &consoleVBO);
-        glBindVertexArray(consoleVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, consoleVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(consoleVertices), consoleVertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+    GLuint consoleVAO, consoleVBO;
+    glGenVertexArrays(1, &consoleVAO);
+    glGenBuffers(1, &consoleVBO);
+    glBindVertexArray(consoleVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, consoleVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(consoleVertices), consoleVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
-        SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(1);
 
-        TTF_Font *consoleFont = TTF_OpenFont("resources/fonts/console.ttf", 16);
-        if (!consoleFont)
-        {
-            warn("Failed to load font", TTF_GetError());
+    TTF_Font *consoleFont = TTF_OpenFont("resources/fonts/console.ttf", 16);
+    if (!consoleFont) {
+        warn("Failed to load font", TTF_GetError());
+    }
+
+    extern std::string commandInput;
+    extern bool consoleActive;
+    extern float consoleAnim;
+    extern const float consoleAnimSpeed;
+
+    // head bob effect variables
+    float headBobTimer = 0.0f;
+    const float bobbingSpeed = 10.0f;
+    const float bobbingAmplitude = 0.10f;
+
+    G_Running = true;
+    SDL_Event event;
+    Uint32 lastTime = SDL_GetTicks();
+    float fpsTimer = 0.0f;
+    int fpsCount = 0;
+    float currentFPS = 0.0f;
+
+    extern glm::vec3 cameraPos;
+    extern glm::vec3 cameraFront;
+    extern glm::vec3 cameraUp;
+
+    SDL_StartTextInput();
+
+    // main loop
+    while (G_Running) {
+        // update relative mouse mode
+        if (consoleActive && currentRelativeMode) {
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+            currentRelativeMode = false;
+        }
+        else if (!consoleActive && !currentRelativeMode) {
+            SDL_SetRelativeMouseMode(SDL_TRUE);
+            currentRelativeMode = true;
         }
 
-        extern std::string commandInput;
-        extern bool consoleActive;
-        extern float consoleAnim;
-        extern const float consoleAnimSpeed;
+        Uint32 currentTime = SDL_GetTicks();
+        float deltaTime = (currentTime - lastTime) / 1000.0f;
+        lastTime = currentTime;
 
-        // head bob effect variables
-        float headBobTimer = 0.0f;
-        const float bobbingSpeed = 10.0f;
-        const float bobbingAmplitude = 0.10f;
+        fpsTimer += deltaTime;
+        fpsCount++;
+        if (fpsTimer >= 1.0f) {
+            currentFPS = fpsCount / fpsTimer;
+            fpsCount = 0;
+            fpsTimer = 0.0f;
+        }
 
-        G_Running = true;
-        SDL_Event event;
-        Uint32 lastTime = SDL_GetTicks();
-        float fpsTimer = 0.0f;
-        int fpsCount = 0;
-        float currentFPS = 0.0f;
-
-        extern glm::vec3 cameraPos;
-        extern glm::vec3 cameraFront;
-        extern glm::vec3 cameraUp;
-
-        SDL_StartTextInput();
-
-        // main loop
-        while (G_Running)
-        {
-            // update relative mouse mode
-            if (consoleActive && currentRelativeMode)
-            {
-                SDL_SetRelativeMouseMode(SDL_FALSE);
-                currentRelativeMode = false;
-            }
-            else if (!consoleActive && !currentRelativeMode)
-            {
-                SDL_SetRelativeMouseMode(SDL_TRUE);
-                currentRelativeMode = true;
-            }
-
-            Uint32 currentTime = SDL_GetTicks();
-            float deltaTime = (currentTime - lastTime) / 1000.0f;
-            lastTime = currentTime;
-
-            fpsTimer += deltaTime;
-            fpsCount++;
-            if (fpsTimer >= 1.0f)
-            {
-                currentFPS = fpsCount / fpsTimer;
-                fpsCount = 0;
-                fpsTimer = 0.0f;
-            }
-
-            // process events
-            while (SDL_PollEvent(&event))
-            {
-                switch (event.type)
-                {
-                    case SDL_QUIT:
-                        G_Running = false;
-                        break;
-                    case SDL_KEYDOWN:
-                        if (event.key.keysym.sym == SDLK_QUOTE)
-                            consoleActive = true;
-                        if (event.key.keysym.sym == SDLK_ESCAPE)
-                            consoleActive = false;
-                    else if (consoleActive)
-                    {
-                        if (event.key.keysym.sym == SDLK_BACKSPACE && !commandInput.empty())
-                            commandInput.pop_back();
-                        else if (event.key.keysym.sym == SDLK_RETURN)
-                        {
-                            processCommand(commandInput, G_Running, commandInput, sectors, walls, levelVertices,
-                                           VBO, textureLevel, G_Paused, M_MouseSensitivity, S_CurrentVolume,
-                                           R_CurrentTextureKey, window, C_CommandHistory, C_HistoryIndex);
-                            mapCenter = computeLevelCenter(walls);
-                        }
-                        else if (event.key.keysym.sym == SDLK_UP)
-                        {
-                            if (!C_CommandHistory.empty() && C_HistoryIndex > 0)
-                            {
-                                C_HistoryIndex--;
-                                commandInput = C_CommandHistory[C_HistoryIndex];
-                            }
-                        }
-                        else if (event.key.keysym.sym == SDLK_DOWN)
-                        {
-                            if (!C_CommandHistory.empty() &&
-                                C_HistoryIndex < static_cast<int>(C_CommandHistory.size()) - 1)
-                            {
-                                C_HistoryIndex++;
-                                commandInput = C_CommandHistory[C_HistoryIndex];
-                            }
-                            else
-                            {
-                                commandInput.clear();
-                            }
+        // process events
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+            case SDL_QUIT:
+                G_Running = false;
+                break;
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_QUOTE)
+                    consoleActive = true;
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                    consoleActive = false;
+                else if (consoleActive) {
+                    if (event.key.keysym.sym == SDLK_BACKSPACE && !commandInput.empty())
+                        commandInput.pop_back();
+                    else if (event.key.keysym.sym == SDLK_RETURN) {
+                        processCommand(commandInput, G_Running, commandInput, sectors, walls, levelVertices,
+                                       VBO, textureLevel, G_Paused, M_MouseSensitivity, S_CurrentVolume,
+                                       R_CurrentTextureKey, window, C_CommandHistory, C_HistoryIndex);
+                        mapCenter = computeLevelCenter(walls);
+                    }
+                    else if (event.key.keysym.sym == SDLK_UP) {
+                        if (!C_CommandHistory.empty() && C_HistoryIndex > 0) {
+                            C_HistoryIndex--;
+                            commandInput = C_CommandHistory[C_HistoryIndex];
                         }
                     }
-                    break;
-                    case SDL_TEXTINPUT:
-                        if (consoleActive)
-                            commandInput += event.text.text;
-                    break;
-                    case SDL_MOUSEMOTION:
-                        if (!consoleActive)
-                        {
-                            M_processMouseInput(
-                                event.motion.xrel,
-                                event.motion.yrel,
-                                M_pitch,
-                                M_yaw,
-                                M_MouseSensitivity,
-                                cameraFront);
+                    else if (event.key.keysym.sym == SDLK_DOWN) {
+                        if (!C_CommandHistory.empty() &&
+                            C_HistoryIndex < static_cast<int>(C_CommandHistory.size()) - 1) {
+                            C_HistoryIndex++;
+                            commandInput = C_CommandHistory[C_HistoryIndex];
                         }
-                        break;
-                    default:
-                        break;
+                        else {
+                            commandInput.clear();
+                        }
+                    }
                 }
+                break;
+            case SDL_TEXTINPUT:
+                if (consoleActive)
+                    commandInput += event.text.text;
+                break;
+            case SDL_MOUSEMOTION:
+                if (!consoleActive) {
+                    M_processMouseInput(
+                        event.motion.xrel,
+                        event.motion.yrel,
+                        M_pitch,
+                        M_yaw,
+                        M_MouseSensitivity,
+                        cameraFront);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (!consoleActive) {
+            const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
+            glm::vec3 forwardDirection = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
+            glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, cameraUp));
+
+            if (keyStates[SDL_SCANCODE_W]) {
+                M_move_forward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
+            }
+            if (keyStates[SDL_SCANCODE_S]) {
+                M_move_backward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
+            }
+            if (keyStates[SDL_SCANCODE_A]) {
+                M_move_left(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
+            }
+            if (keyStates[SDL_SCANCODE_D]) {
+                M_move_right(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
             }
 
-            if (!consoleActive)
-            {
+            if (M_fly) { // enable flying movement {
+                if (keyStates[SDL_SCANCODE_SPACE]) {
+                    cameraPos.y += M_cameraSpeed * deltaTime;
+                }
+                if (keyStates[SDL_SCANCODE_LCTRL]) {
+                    cameraPos.y -= M_cameraSpeed * deltaTime;
+                }
+            }
+        }
+
+        // --- head Bob Calculation ---
+        // check if movement keys are pressed
+        float M_headbob_offset = 0.0f;
+        if (!consoleActive) {
+            bool M_isMoving = false; {
                 const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
-                glm::vec3 forwardDirection = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
-                glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, cameraUp));
-
-                if (keyStates[SDL_SCANCODE_W])
-                {
-                    M_move_forward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
-                }
-                if (keyStates[SDL_SCANCODE_S])
-                {
-                    M_move_backward(keyStates, forwardDirection, walls, mapCenter, deltaTime, cameraPos);
-                }
-                if (keyStates[SDL_SCANCODE_A])
-                {
-                    M_move_left(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
-                }
-                if (keyStates[SDL_SCANCODE_D])
-                {
-                    M_move_right(keyStates, rightDirection, walls, mapCenter, deltaTime, cameraPos);
+                if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S] ||
+                    keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D]) {
+                    M_isMoving = true;
                 }
 
-                if (M_fly) // enable flying movement
-                {
-                    if (keyStates[SDL_SCANCODE_SPACE])
-                    {
-                        cameraPos.y += M_cameraSpeed * deltaTime;
-                    }
-                    if (keyStates[SDL_SCANCODE_LCTRL])
-                    {
-                        cameraPos.y -= M_cameraSpeed * deltaTime;
-                    }
+                if (keyStates[SDL_SCANCODE_A] && keyStates[SDL_SCANCODE_D] && !(keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S])) {
+                    M_isMoving = false;
+                }
+                if (keyStates[SDL_SCANCODE_W] && keyStates[SDL_SCANCODE_S] && !(keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D])) {
+                    M_isMoving = false;
                 }
             }
 
-
-            // --- head Bob Calculation ---
-            // check if movement keys are pressed
-            float headBobOffset = 0.0f;
-            if (!consoleActive)
-            {
-                bool isMoving = false;
-                {
-                    const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
-                    if (keyStates[SDL_SCANCODE_W] || keyStates[SDL_SCANCODE_S] ||
-                        keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D])
-                    {
-                        isMoving = true;
-                    }
-                }
-
-                if (isMoving)
-                {
-                    headBobTimer += deltaTime * bobbingSpeed;
-                    headBobOffset = sin(headBobTimer) * bobbingAmplitude;
-                }
-                else
-                {
-                    headBobTimer = 0.0f;
-                }
+            if (M_isMoving) {
+                headBobTimer += deltaTime * bobbingSpeed;
+                M_headbob_offset = sin(headBobTimer) * bobbingAmplitude;
             }
-
-            // --- end Head Bob Calculation ---
-
-            // animate console overlay
-            float targetAnim = consoleActive ? 1.0f : 0.0f;
-            if (consoleAnim < targetAnim)
-            {
-                consoleAnim += consoleAnimSpeed * deltaTime;
-                if (consoleAnim > targetAnim)
-                    consoleAnim = targetAnim;
+            else {
+                headBobTimer = 0.0f;
             }
-            else if (consoleAnim > targetAnim)
-            {
-                consoleAnim -= consoleAnimSpeed * deltaTime;
-                if (consoleAnim < targetAnim)
-                    consoleAnim = targetAnim;
-            }
-
-            // Pass headBobOffset to the render function
-            render(shaderProgram, ourTextureLoc, textureLevel, mapCenter,
-                   modelLoc, viewLoc, projLoc, VAO, levelVertices, headBobOffset);
-
-            // render console overlay if active
-            if (consoleAnim > 0.0f)
-            {
-                glUseProgram(consoleShaderProgram);
-                glm::mat4 ortho = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH),
-                                             static_cast<float>(WINDOW_HEIGHT), 0.0f);
-                glUniformMatrix4fv(consoleProjLoc, 1, GL_FALSE, glm::value_ptr(ortho));
-                glm::mat4 consoleModel = glm::translate(glm::mat4(1.0f),
-                                                        glm::vec3(0.0f, -consoleHeight + consoleAnim * consoleHeight, 0.0f));
-                glUniformMatrix4fv(consoleModelLoc, 1, GL_FALSE, glm::value_ptr(consoleModel));
-                glUniform4f(consoleColorLoc, 0.0f, 0.0f, 0.0f, 0.8f);
-
-                glBindVertexArray(consoleVAO);
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-                glBindVertexArray(0);
-
-                renderText(consoleFont, "> " + commandInput, 10.0f, 10.0f, textShaderProgram);
-            }
-
-            // render FPS and pause indicator
-            renderText(consoleFont, "FPS: " + std::to_string(static_cast<int>(currentFPS)),
-                       WINDOW_WIDTH - 100, 10.0f, textShaderProgram);
-            if (G_Paused)
-                renderText(consoleFont, "PAUSED", WINDOW_WIDTH / 2 - 50, 50, textShaderProgram);
-
-            SDL_GL_SwapWindow(window);
         }
 
-        // cleanup
-        glDeleteVertexArrays(1, &VAO);
-        glDeleteBuffers(1, &VBO);
-        glDeleteProgram(shaderProgram);
-        glDeleteVertexArrays(1, &consoleVAO);
-        glDeleteBuffers(1, &consoleVBO);
-        glDeleteProgram(consoleShaderProgram);
-        glDeleteProgram(textShaderProgram);
+        // --- end Head Bob Calculation ---
 
-        TTF_CloseFont(consoleFont);
-        TTF_Quit();
-        IMG_Quit();
-        SDL_StopTextInput();
-        Mix_FreeMusic(music);
-        SDL_GL_DeleteContext(context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        // animate console overlay
+        float targetAnim = consoleActive ? 1.0f : 0.0f;
+        if (consoleAnim < targetAnim) {
+            consoleAnim += consoleAnimSpeed * deltaTime;
+            if (consoleAnim > targetAnim)
+                consoleAnim = targetAnim;
+        }
+        else if (consoleAnim > targetAnim) {
+            consoleAnim -= consoleAnimSpeed * deltaTime;
+            if (consoleAnim < targetAnim)
+                consoleAnim = targetAnim;
+        }
 
-        return 0;
+        // Pass M_headbob_offset to the render function
+        render(shaderProgram, ourTextureLoc, textureLevel, mapCenter,
+               modelLoc, viewLoc, projLoc, VAO, levelVertices, M_headbob_offset);
+
+        // render console overlay if active
+        if (consoleAnim > 0.0f) {
+            glUseProgram(consoleShaderProgram);
+            glm::mat4 ortho = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH),
+                                         static_cast<float>(WINDOW_HEIGHT), 0.0f);
+            glUniformMatrix4fv(consoleProjLoc, 1, GL_FALSE, glm::value_ptr(ortho));
+            glm::mat4 consoleModel = glm::translate(glm::mat4(1.0f),
+                                                    glm::vec3(0.0f, -consoleHeight + consoleAnim * consoleHeight, 0.0f));
+            glUniformMatrix4fv(consoleModelLoc, 1, GL_FALSE, glm::value_ptr(consoleModel));
+            glUniform4f(consoleColorLoc, 0.0f, 0.0f, 0.0f, 0.8f);
+
+            glBindVertexArray(consoleVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+
+            renderText(consoleFont, "> " + commandInput, 10.0f, 10.0f, textShaderProgram);
+        }
+
+        // render FPS and pause indicator
+        renderText(consoleFont, "FPS: " + std::to_string(static_cast<int>(currentFPS)),
+                   WINDOW_WIDTH - 100, 10.0f, textShaderProgram);
+        if (G_Paused)
+            renderText(consoleFont, "PAUSED", WINDOW_WIDTH / 2 - 50, 50, textShaderProgram);
+
+        SDL_GL_SwapWindow(window);
+    }
+
+    // cleanup
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram);
+    glDeleteVertexArrays(1, &consoleVAO);
+    glDeleteBuffers(1, &consoleVBO);
+    glDeleteProgram(consoleShaderProgram);
+    glDeleteProgram(textShaderProgram);
+
+    TTF_CloseFont(consoleFont);
+    TTF_Quit();
+    IMG_Quit();
+    SDL_StopTextInput();
+    Mix_FreeMusic(music);
+    SDL_GL_DeleteContext(context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
+    return 0;
 }

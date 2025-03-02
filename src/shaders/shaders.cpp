@@ -9,19 +9,16 @@
 // headers
 #include "../errors/error.hpp"
 
-std::string readShaderFile(const std::string &filePath)
-{
+std::string readShaderFile(const std::string &filePath) {
 
-    if (filePath.empty())
-    {
+    if (filePath.empty()) {
         critical("Error: Shader file path is empty!", "");
         return "";
     }
 
     std::ifstream shaderFile(filePath);
     std::stringstream shaderStream;
-    if (!shaderFile.is_open())
-    {
+    if (!shaderFile.is_open()) {
         critical("Error: Could not open shader file", filePath.c_str());
         return "";
     }
@@ -29,6 +26,7 @@ std::string readShaderFile(const std::string &filePath)
     return shaderStream.str();
 }
 
+// why? why i did this?
 GLuint createShaderProgram(const char *vertex, const char *fragment)
 {
     if (!vertex || vertex[0] == '\0' || !fragment || fragment[0] == '\0')
@@ -41,8 +39,7 @@ GLuint createShaderProgram(const char *vertex, const char *fragment)
 
     GLint success;
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         critical("Error compiling vertex shader", infoLog);
@@ -53,8 +50,7 @@ GLuint createShaderProgram(const char *vertex, const char *fragment)
     glShaderSource(fragmentShader, 1, &fragmentShaderCode, NULL);
     glCompileShader(fragmentShader);
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         critical("Error compiling fragment shader", infoLog);
@@ -65,8 +61,7 @@ GLuint createShaderProgram(const char *vertex, const char *fragment)
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         char infoLog[512];
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         critical("Error linking shader program", infoLog);
