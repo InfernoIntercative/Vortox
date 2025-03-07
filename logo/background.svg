@@ -5,8 +5,11 @@
    viewBox="0 0 200 200"
    version="1.1"
    id="svg7"
-   sodipodi:docname="main.svg"
+   sodipodi:docname="background.svg"
    inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   inkscape:export-filename="background.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -21,8 +24,8 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="0.27621359"
-     inkscape:cx="919.57823"
-     inkscape:cy="734.9385"
+     inkscape:cx="412.72408"
+     inkscape:cy="1031.8102"
      inkscape:window-width="1920"
      inkscape:window-height="1008"
      inkscape:window-x="0"
@@ -34,7 +37,8 @@
      width="200"
      height="200"
      fill="#0F0A1E"
-     id="rect1" />
+     id="rect1"
+     style="fill:#0a0f1e;fill-opacity:1" />
   <!-- Glowing core shape (hexagon with gradient) -->
   <defs
      id="defs3">
@@ -56,7 +60,7 @@
     <!-- Glow effect -->
     <filter
        id="glow"
-       x="-0.048"
+       x="-0.047999998"
        y="-0.055427252"
        width="1.096"
        height="1.1108545">
@@ -77,47 +81,52 @@
   </defs>
   <!-- Layered hexagons for depth -->
   <g
-     transform="translate(100, 100)"
+     transform="translate(100.00001,100.00001)"
      id="g6">
     <!-- Outer hexagon -->
     <path
-       d="M -50 -86.6 L 50 -86.6 L 100 0 L 50 86.6 L -50 86.6 L -100 0 Z"
+       d="M -50,-86.6 H 50 L 100.00001,0 50,86.6 H -50 L -100,0 Z"
        fill="url(#grad1)"
        filter="url(#glow)"
        opacity="0.9"
-       id="path3" />
+       id="path3"
+       style="fill:#0086ff;fill-opacity:1" />
     <!-- Inner hexagon -->
     <path
-       d="M -30 -52 L 30 -52 L 60 0 L 30 52 L -30 52 L -60 0 Z"
+       d="M -30,-52 H 30 L 60,0 30,52 H -30 L -60,0 Z"
        fill="#4A148C"
        opacity="0.8"
-       id="path4" />
+       id="path4"
+       style="fill:#00519a;fill-opacity:1" />
     <!-- Dynamic particles -->
     <circle
        cx="0"
        cy="-40"
        r="3"
        fill="#E1BEE7"
-       id="circle4" />
+       id="circle4"
+       style="fill:#ffffff;fill-opacity:1" />
     <circle
        cx="35"
        cy="-20"
        r="2"
        fill="#E1BEE7"
-       id="circle5" />
+       id="circle5"
+       style="fill:#ffffff;fill-opacity:1" />
     <circle
        cx="-35"
        cy="20"
        r="2"
        fill="#E1BEE7"
-       id="circle6" />
+       id="circle6"
+       style="fill:#ffffff;fill-opacity:1" />
     <circle
        cx="17.840996"
        cy="32.391777"
        fill="#e1bee7"
        id="circle6-3"
        inkscape:transform-center-x="6.9361388"
-       style="stroke-width:0.668544"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.668544"
        r="1.3370874" />
     <circle
        cx="-20.587776"
@@ -125,20 +134,10 @@
        fill="#e1bee7"
        id="circle6-3-6"
        inkscape:transform-center-x="13.263175"
-       style="stroke-width:1.27838"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:1.27838"
        r="2.5567572" />
   </g>
   <!-- Orbital ring -->
-  <circle
-     cx="100"
-     cy="100"
-     r="75"
-     fill="none"
-     stroke="#9C27B0"
-     stroke-width="2"
-     opacity="0.6"
-     stroke-dasharray="4 4"
-     id="circle7" />
   <!-- Subtle grid texture -->
   <pattern
      id="grid"
@@ -152,10 +151,4 @@
        stroke-width="0.5"
        id="path7" />
   </pattern>
-  <rect
-     width="200"
-     height="200"
-     fill="url(#grid)"
-     opacity="0.3"
-     id="rect7" />
 </svg>

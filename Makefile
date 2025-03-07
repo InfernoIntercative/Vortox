@@ -1,5 +1,5 @@
 CXX ?= ccache g++
-CXXFLAGS := -std=c++17 -pipe -MMD
+CXXFLAGS := -std=c++17 -Wall -Wextra -pipe -MMD -fno-exceptions -fno-rtti -fomit-frame-pointer -fstrict-aliasing
 BUILD ?= Release
 ifeq ($(BUILD),Release)
     CXXFLAGS += -O3 -march=native -flto
@@ -23,7 +23,7 @@ LIBS     := $(SDL2_LIBS) $(GLEW_LIBS) $(SDL2_TTF_LIBS) $(SDL2_IMAGE_LIBS) $(SDL2
 SRC_DIR := src
 OBJ_DIR := build/obj
 BIN_DIR := build/bin
-EXEC    := XylonEngine
+EXEC    := Vortox
 
 SOURCES := $(shell find $(SRC_DIR) -type f -name "*.cpp" | grep -v "/lib/")
 OBJS    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))

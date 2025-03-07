@@ -125,8 +125,8 @@ int main(int argc, char *argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
     SDL_Window *window = SDL_CreateWindow(
-        WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+        window_title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!window)
     {
         std::printf("Window creation failed: %s\n", SDL_GetError());
@@ -542,7 +542,7 @@ int main(int argc, char *argv[])
                     fout << "{\n";
                     fout << "    level_music= \"resources/musics/demo.ogg\"\n";
                     fout << "    creator= russian95\n";
-                    fout << "    description= \"test level for the Xylon\"\n";
+                    fout << "    description= \"test level for the Vortox\"\n";
                     fout << "    ambient_light= 0.0\n";
                     fout << "}\n\n";
                     fout << "[SECTOR]\n";

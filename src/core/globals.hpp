@@ -2,15 +2,15 @@
 
 #include <stdio.h>
 
-extern const float WINDOW_WIDTH;
-extern const float WINDOW_HEIGHT;
-extern const char WINDOW_TITLE[];
+extern const float window_width;
+extern const float window_height;
+extern const char window_title[];
+extern const char window_icon[];
+
+// maps
 extern const char default_level_path[];
 
-// player variables
-extern float FOV;
-
 // for other headers or cpp files
-extern float deltaTime;
+extern float G_deltaTime;
 
-extern bool G_Running;
+extern bool G_running;

@@ -11,6 +11,13 @@ void error(const char *message, const char *log) {
         fprintf(stderr, "[ERROR] %s\n", message);
 }
 
+void debug(const char *message, const char *log) {
+    if (log)
+        fprintf(stderr, "[DEBUG] %s: %s\n", message, log);
+    else
+        fprintf(stderr, "[DEBUG] %s\n", message);
+}
+
 void info(const char *message, const char *log) {
     if (log)
         fprintf(stderr, "[INFO] %s: %s\n", message, log);

@@ -3,8 +3,14 @@
 clear
 
 if make; then
-  ./bin/XylonEngine "$@"
+  ./build/bin/Vortox "$@"
 else
-  echo "Compilation failed. The binary will not be executed."
-  exit 1
+  echo "Compilation failed. Do you want to debug? (y/n)"
+  read -r answer
+  if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+    gdb ./build/bin/Vortox
+  else
+    echo "Exiting..."
+    exit 1
+  fi
 fi

@@ -34,30 +34,30 @@ void moveWithCollision(glm::vec3 &cameraPos, const glm::vec3 &movement,
     }
 }
 
-void M_move_forward(const Uint8 *keyStates, const glm::vec3 &forwardDirection,
+void M_move_forward(const glm::vec3 &forwardDirection,
                     const std::vector<Wall> &walls, const glm::vec3 &mapCenter,
-                    float deltaTime, glm::vec3 &cameraPos) {
-    glm::vec3 movement = forwardDirection * M_cameraSpeed * deltaTime;
+                    float dt, glm::vec3 &cameraPos) {
+    glm::vec3 movement = forwardDirection * M_cameraSpeed * dt;
     moveWithCollision(cameraPos, movement, walls, mapCenter, collisionRadius);
 }
 
-void M_move_backward(const Uint8 *keyStates, const glm::vec3 &forwardDirection,
+void M_move_backward(const glm::vec3 &forwardDirection,
                      const std::vector<Wall> &walls, const glm::vec3 &mapCenter,
-                     float deltaTime, glm::vec3 &cameraPos) {
-    glm::vec3 movement = -forwardDirection * M_cameraSpeed * deltaTime;
+                     float dt, glm::vec3 &cameraPos) {
+    glm::vec3 movement = -forwardDirection * M_cameraSpeed * dt;
     moveWithCollision(cameraPos, movement, walls, mapCenter, collisionRadius);
 }
 
-void M_move_left(const Uint8 *keyStates, const glm::vec3 &rightDirection,
+void M_move_left(const glm::vec3 &rightDirection,
                  const std::vector<Wall> &walls, const glm::vec3 &mapCenter,
-                 float deltaTime, glm::vec3 &cameraPos) {
-    glm::vec3 movement = -rightDirection * M_cameraSpeed * deltaTime;
+                 float dt, glm::vec3 &cameraPos) {
+    glm::vec3 movement = -rightDirection * M_cameraSpeed * dt;
     moveWithCollision(cameraPos, movement, walls, mapCenter, collisionRadius);
 }
 
-void M_move_right(const Uint8 *keyStates, const glm::vec3 &rightDirection,
+void M_move_right(const glm::vec3 &rightDirection,
                   const std::vector<Wall> &walls, const glm::vec3 &mapCenter,
-                  float deltaTime, glm::vec3 &cameraPos) {
-    glm::vec3 movement = rightDirection * M_cameraSpeed * deltaTime;
+                  float dt, glm::vec3 &cameraPos) {
+    glm::vec3 movement = rightDirection * M_cameraSpeed * dt;
     moveWithCollision(cameraPos, movement, walls, mapCenter, collisionRadius);
 }

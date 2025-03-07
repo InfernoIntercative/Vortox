@@ -1,13 +1,13 @@
-Xylon Engine License (XEL) v3.0
+Vortox Engine License (XEL) v3.0
 Copyright (c) 2025 Inferno Interactive
 
 - Preamble
 
-The Xylon Engine ("Software") is open-source software available to be used, modified, and redistributed under the terms of this License. Our goal is to empower developers to build awesome games and applications while fostering a collaborative community. The Software is provided "as is" with no warranties, either express or implied.
+The Vortox Engine ("Software") is open-source software available to be used, modified, and redistributed under the terms of this License. Our goal is to empower developers to build awesome games and applications while fostering a collaborative community. The Software is provided "as is" with no warranties, either express or implied.
 
 - 1. Definitions
 
-    * Software: The Xylon Engine, including its source code, binaries, documentation, and related materials.
+    * Software: The Vortox Engine, including its source code, binaries, documentation, and related materials.
 
     * User: Anyone who obtains a copy of the Software.
 
@@ -25,8 +25,7 @@ Subject to the terms and conditions of this License, you are granted the rights 
 
 - 3. Attribution
 
-Any version of the Software, modified or not, must display the following acknowledgment in a prominent location (e.g., documentation, about section, splash screen):
-"Powered by Xylon"
+Any version of the Software, modified or not, must display the following acknowledgment in a prominent location (e.g., documentation, about section, splash screen)
 
 - 4. Contributions and Credits
 

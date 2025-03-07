@@ -85,8 +85,8 @@ void renderText(TTF_Font *font, const std::string &text, float x, float y, GLuin
 
     glUseProgram(textShaderProgram);
 
-    glm::mat4 ortho = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH),
-                                 static_cast<float>(WINDOW_HEIGHT), 0.0f);
+    glm::mat4 ortho = glm::ortho(0.0f, static_cast<float>(window_width),
+                                 static_cast<float>(window_height), 0.0f);
     GLint projLoc = glGetUniformLocation(textShaderProgram, "projection");
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(ortho));
 

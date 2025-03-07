@@ -3,6 +3,6 @@
 #include <stdio.h>
 
 // important editor constants
-const int WINDOW_WIDTH = 1280;
-const int WINDOW_HEIGHT = 720;
-const char WINDOW_TITLE[] = "XYM LEditor";
+const int window_width = 1280;
+const int window_height = 720;
+const char window_title[] = "XYM LEditor";
