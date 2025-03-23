@@ -3,7 +3,7 @@
 dir="src"
 
 if [ ! -d "$dir" ]; then
-  echo "Nop, The folder doesn't exist."
+  echo "Nop! The folder doesn't exist."
   exit 1
 fi
 
