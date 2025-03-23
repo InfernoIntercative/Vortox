@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-
 // headers
 #include "../levels/struct.hpp"
 

@@ -1,0 +1,11 @@
+// naming conventions:
+//
+// RT extends to "Render Things" (only for func)
+// RVT extends to "Render Variables For Things"
+// G was used for "Game", but now it's just "Global"
+// M extends for "Movement"
+// L extends for "Level"
+// C extends for "Console"
+//
+// though, not fully 100% of the engine use the naming conventions
+//

@@ -1,11 +1,8 @@
 level_version= 4.22
-ceiling_height= 10
-floor_height= 0
 {
-    level_music= "resources/musics/demo.ogg"
+    musicpath= "resources/songs/demo.ogg"
     creator= russian95
     description= "test level for the Vortox"
-    ambient_light= 0.0
 }
 
 [SECTOR]

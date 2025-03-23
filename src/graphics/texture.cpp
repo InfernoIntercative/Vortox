@@ -1,21 +1,18 @@
-#include <stdio.h>
 #include <GL/glew.h>
 #include <SDL2/SDL_image.h>
+#include <stdio.h>
 
 #include <iostream>
 
 // --- texture Loader using SDL_image ---
-GLuint loadTexture(const char *path)
-{
+GLuint loadTexture(const char *path) {
     SDL_Surface *surface = IMG_Load(path);
-    if (!surface)
-    {
+    if (!surface) {
         std::cerr << "IMG_Load Error: " << IMG_GetError() << std::endl;
 
         // fallback to missing texture if the main texture fails to load
         surface = IMG_Load("resources/textures/missing.png");
-        if (!surface)
-        {
+        if (!surface) {
             std::cerr << "Fallback Error: " << IMG_GetError() << std::endl;
             return 0;
         }

@@ -1,13 +1,17 @@
 #pragma once
 
-#include <vector>
+#include <GL/glew.h>
+
 #include <string>
 #include <unordered_map>
-#include <GL/glew.h>
+#include <vector>
 
 #include "struct.hpp"
 
-extern char WTF_map[255];
+extern char active_map_path[255];
 
-bool L_loadLevel(const char *filename, std::vector<Sector> &sectors, std::vector<Wall> &walls,
-                 std::unordered_map<std::string, GLuint> &textureLevel, Spawn &spawn);
+bool L_LoadLevel(const char *filename, std::vector<Sector> &sectors,
+                 std::vector<Wall>                       &walls,
+                 std::unordered_map<std::string, GLuint> &textureLevel,
+                 Spawn                                   &spawn,
+                 LevelMetadata                           &metadata);
