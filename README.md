@@ -6,7 +6,7 @@ Vortox is a super-optimized 3D game engine designed to deliver high performance 
 
 ## Features ✨
 
-- **Real 3D Rendering**: Full support for 3D graphics using OpenGL. 🌐
+- **Real 3D Rendering**: Full support for 3D graphics using OpenGL. 🌐 (i am working to add Vulkan as an option too =D)
 - **Performance**: Focused on optimization and efficient resource usage. ⚡
 - **Extensibility**: The engine is designed to be easily extensible, allowing you to add new features as needed. 🔧
 
