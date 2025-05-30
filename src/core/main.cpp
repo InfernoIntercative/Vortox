@@ -43,6 +43,8 @@
 // graphics
 #include "../graphics/render.hpp"
 
+#include "SDLContext.hpp"
+
 int                      S_CurrentVolume     = MIX_MAX_VOLUME / 2;
 std::string              R_CurrentTextureKey = "1";
 std::vector<std::string> C_CommandHistory;
@@ -83,44 +85,53 @@ glm::vec3 computeLevelCenter(const std::vector<Wall> &walls) {
 }
 
 std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors,
-                                      const std::vector<Wall>   &walls) {
+                                      const std::vector<Wall> &walls) {
     std::vector<float> vertices;
-    size_t             totalTriangles = 0;
-    for (const Sector &sector : sectors)
+    size_t totalTriangles = 0;
+    for (const auto &sector : sectors) {
         totalTriangles += sector.wallCount * 2;
+    }
     vertices.reserve(totalTriangles * 5 * 3);
 
-    float RVT_textureScale = 2.5f;
+    const float textureScale = 2.5f;
+    auto pushVertex = [&](const glm::vec3 &pos, const glm::vec2 &uv) {
+        vertices.push_back(pos.x);
+        vertices.push_back(pos.y);
+        vertices.push_back(pos.z);
+        vertices.push_back(uv.x);
+        vertices.push_back(uv.y);
+    };
 
-    for (const Sector &sector : sectors) {
+    for (const auto &sector : sectors) {
         for (int i = 0; i < sector.wallCount; ++i) {
-            int wallIndex = sector.startWall + i;
-            if (wallIndex < 0 || wallIndex >= static_cast<int>(walls.size()))
+            int idx = sector.startWall + i;
+            if (idx < 0 || idx >= static_cast<int>(walls.size())) {
                 continue;
-            const Wall &wall  = walls[wallIndex];
-            float       bl[3] = {wall.x1, sector.floor, wall.y1};
-            float       br[3] = {wall.x2, sector.floor, wall.y2};
-            float       tr[3] = {wall.x2, sector.ceiling, wall.y2};
-            float       tl[3] = {wall.x1, sector.ceiling, wall.y1};
+            }
+            const auto &w = walls[idx];
+            glm::vec3 bl{w.x1, sector.floor, w.y1};
+            glm::vec3 br{w.x2, sector.floor, w.y2};
+            glm::vec3 tr{w.x2, sector.ceiling, w.y2};
+            glm::vec3 tl{w.x1, sector.ceiling, w.y1};
 
-            float dx         = wall.x2 - wall.x1;
-            float dz         = wall.y2 - wall.y1;
-            float wallLength = sqrt(dx * dx + dz * dz);
-            float wallHeight = sector.ceiling - sector.floor;
+            float dx = w.x2 - w.x1;
+            float dz = w.y2 - w.y1;
+            float length = std::sqrt(dx * dx + dz * dz);
+            float height = sector.ceiling - sector.floor;
 
-            float texBL[2] = {0.0f, 0.0f};
-            float texBR[2] = {wallLength / RVT_textureScale, 0.0f};
-            float texTR[2] = {wallLength / RVT_textureScale, wallHeight / RVT_textureScale};
-            float texTL[2] = {0.0f, wallHeight / RVT_textureScale};
+            glm::vec2 texBL{0.0f, 0.0f};
+            glm::vec2 texBR{length / textureScale, 0.0f};
+            glm::vec2 texTR{length / textureScale, height / textureScale};
+            glm::vec2 texTL{0.0f, height / textureScale};
 
-            vertices.insert(vertices.end(),
-                            {bl[0], bl[1], bl[2], texBL[0], texBL[1], br[0], br[1],
-                             br[2], texBR[0], texBR[1], tr[0], tr[1], tr[2], texTR[0],
-                             texTR[1]});
-            vertices.insert(vertices.end(),
-                            {bl[0], bl[1], bl[2], texBL[0], texBL[1], tr[0], tr[1],
-                             tr[2], texTR[0], texTR[1], tl[0], tl[1], tl[2], texTL[0],
-                             texTL[1]});
+            // First triangle
+            pushVertex(bl, texBL);
+            pushVertex(br, texBR);
+            pushVertex(tr, texTR);
+            // Second triangle
+            pushVertex(bl, texBL);
+            pushVertex(tr, texTR);
+            pushVertex(tl, texTL);
         }
     }
     return vertices;
@@ -197,8 +208,7 @@ int main() {
     }
 
     // initialization
-    init();
-
+    SDLContext sdlContext;
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
