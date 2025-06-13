@@ -1,0 +1,10 @@
+how to name things in the code:
+-------------------------------
+- `RT_` stands for "render task" (used only for functions related to rendering tasks).
+- `RV_` stands for "render variables" (used for variables related to rendering).
+- `G_` stands for "global" (used for global variables or functions).
+- `M_` stands for "movement" (used for movement-related logic or variables).
+- `L_` stands for "level" (used for level-related logic or variables).
+- `C_` stands for "console" (used for console-related logic or variables).
+-------------------------------
+[NOTE] not all parts of the engine fully adhere to these naming conventions yet.

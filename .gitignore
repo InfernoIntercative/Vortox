@@ -1,0 +1,14 @@
+# ignore the compiled Vortox, fuck you if you want the compiled Vortox
+# okay, now it's 6/11/2025, I WILL be adding compiled Vortox files, but I will not add ARM files for a while
+bin/
+obj/
+build/
+
+# IDE Files
+*.vscode/
+*.vs/
+*.idea/
+
+# Temp files
+*.log
+*.tmp
