@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -17,7 +16,7 @@ std::string readShaderFile(const std::string &filePath) {
 
     std::ifstream shaderFile(filePath);
     if (!shaderFile.is_open()) {
-        panic("Could not open shader file: ", filePath.c_str());
+        panic("Could not open shader file", filePath.c_str());
     }
 
     std::stringstream shaderStream;
@@ -35,8 +34,15 @@ GLuint compileShader(GLenum shaderType, const char *shaderSource) {
     if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        const char *shaderTypeStr = (shaderType == GL_VERTEX_SHADER) ? "vertex" : "fragment";
-        panic("Error compiling " + std::string(shaderTypeStr) + " shader: ", infoLog);
+        const char *shaderTypeStr = nullptr;
+        switch (shaderType) {
+            case GL_VERTEX_SHADER: shaderTypeStr = "vertex"; break;
+            case GL_FRAGMENT_SHADER: shaderTypeStr = "fragment"; break;
+            case GL_GEOMETRY_SHADER: shaderTypeStr = "geometry"; break;
+            default: shaderTypeStr = "unknown"; break;
+        }
+        std::string errMsg = "Error compiling " + std::string(shaderTypeStr) + " shader: " + infoLog;
+        panic(errMsg.c_str());
     }
 
     return shader;
@@ -53,8 +59,13 @@ GLuint linkShaderProgram(GLuint vertexShader, GLuint fragmentShader) {
     if (!success) {
         char infoLog[512];
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        panic("Error linking shader program: ", infoLog);
+        std::string errMsg = std::string("Error linking shader program: ") + infoLog;
+        panic(errMsg.c_str());
     }
+
+    // delete shaders after linking
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 
     return shaderProgram;
 }
@@ -71,9 +82,11 @@ GLuint linkMultipleShaders(const std::vector<GLuint> &shaders) {
     if (!success) {
         char infoLog[512];
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        panic("Error linking shader program: ", infoLog);
+        std::string errMsg = std::string("Error linking shader program: ") + infoLog;
+        panic(errMsg.c_str());
     }
 
+    // delete shaders after linking
     for (const auto &shader : shaders) {
         glDeleteShader(shader);
     }
