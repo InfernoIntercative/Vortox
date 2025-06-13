@@ -27,7 +27,7 @@ Vortox is a 3D game engine crafted to provide exceptional performance and flexib
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/Vortox.git
+   git clone https://github.com/InfernoIntercative/Vortox.git
    cd Vortox
    ```
 
