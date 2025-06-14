@@ -30,7 +30,6 @@
 #include "../fonts/fonts.hpp"
 #include "../levels/load.hpp"
 #include "../logsystem/log.hpp"
-#include "../shaders/shaders.hpp"
 
 #include "globals.hpp"
 #include "main.hpp"
@@ -42,6 +41,8 @@
 
 // graphics
 #include "../graphics/render.hpp"
+#include "../shaders/shaders.hpp"
+#include "../shaders/readShaders.hpp"
 
 #include "SDLContext.hpp"
 
@@ -137,50 +138,6 @@ std::vector<float> buildLevelVertices(const std::vector<Sector> &sectors,
     return vertices;
 }
 
-// -- main shaders --
-
-std::string main_vertex_shader_source_STR =
-    readShaderFile("shaders/main/vertex.vert");
-
-std::string main_fragment_shader_source_STR =
-    readShaderFile("shaders/main/fragment.frag");
-
-// -- end main shaders --
-
-// -- text shaders --
-
-std::string text_vertex_shader_source_STR =
-    readShaderFile("shaders/text/vertex.vert");
-
-std::string text_fragment_shader_source_STR =
-    readShaderFile("shaders/text/fragment.frag");
-
-// -- end text shaders --
-
-// -- console shaders --
-
-std::string console_vertex_shader_source_STR =
-    readShaderFile("shaders/console/vertex.vert");
-
-std::string console_fragment_shader_source_STR =
-    readShaderFile("shaders/console/fragment.frag");
-
-// -- end console shaders --
-
-// -- main convertion to --
-
-const char *main_vertex_shader_source   = main_vertex_shader_source_STR.c_str();
-const char *main_fragment_shader_source = main_fragment_shader_source_STR.c_str();
-
-const char *text_vertex_shader_source   = text_vertex_shader_source_STR.c_str();
-const char *text_fragment_shader_source = text_fragment_shader_source_STR.c_str();
-
-const char *console_vertex_shader_source = console_vertex_shader_source_STR.c_str();
-
-const char *console_fragment_shader_source = console_fragment_shader_source_STR.c_str();
-
-// -- end main convertion --
-
 int init() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         panic("Failed to initialize SDL", SDL_GetError());
@@ -205,11 +162,11 @@ int init() {
 // improved head bob calculation helper
 static float CalculateHeadBob(bool isMoving, float deltaTime) {
     // persist head bob state via static variables
-    static float headBobTimer = 0.0f;
-    static float bobbingSpeed = 10.0f;
+    static float headBobTimer     = 0.0f;
+    static float bobbingSpeed     = 10.0f;
     static float bobbingAmplitude = 0.15f;
     static float headBobAmplitude = 0.0f;
-    static bool wasMoving = false;
+    static bool  wasMoving        = false;
     
     if (isMoving) {
          headBobTimer += deltaTime * bobbingSpeed;
@@ -561,7 +518,7 @@ int main() {
             }
         }
 
-        // --- head Bob Calculation ---
+        // head bob calculation 
         float M_headbob_offset = 0.0f;
         if (!consoleActive) {
             const Uint8 *keyStates = SDL_GetKeyboardState(nullptr);
@@ -569,7 +526,7 @@ int main() {
                             keyStates[SDL_SCANCODE_A] || keyStates[SDL_SCANCODE_D];
             M_headbob_offset = CalculateHeadBob(isMoving, G_deltaTime);
         }
-        // --- end Head Bob Calculation ---
+        // end head bob calculation
 
         // animate console overlay
         float targetAnim = consoleActive ? 1.0f : 0.0f;

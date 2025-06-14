@@ -24,6 +24,14 @@ std::string readShaderFile(const std::string &filePath) {
     return shaderStream.str();
 }
 
+// add overload for const char*
+std::string readShaderFile(const char* filePath) {
+    if (filePath == nullptr) {
+        panic("Shader file path is null");
+    }
+    return readShaderFile(std::string(filePath));
+}
+
 GLuint compileShader(GLenum shaderType, const char *shaderSource) {
     GLuint shader = glCreateShader(shaderType);
     glShaderSource(shader, 1, &shaderSource, NULL);
