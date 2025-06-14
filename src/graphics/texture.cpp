@@ -4,17 +4,19 @@
 
 #include <iostream>
 
-// --- texture Loader using SDL_image ---
+// Texture loader using SDL_image
 GLuint loadTexture(const char *path) {
     SDL_Surface *surface = IMG_Load(path);
     if (!surface) {
-        std::cerr << "IMG_Load Error: " << IMG_GetError() << std::endl;
+        // if the texture fails to load, log the error
+        error("IMG_Load failed", IMG_GetError());
 
         // fallback to missing texture if the main texture fails to load
         surface = IMG_Load("resources/textures/missing.png");
         if (!surface) {
-            std::cerr << "Fallback Error: " << IMG_GetError() << std::endl;
-            return 0;
+            // if the fallback also fails, log the error and return 0
+            panic("Fallback error", IMG_GetError());
+            return EXIT_FAILURE;
         }
     }
 
