@@ -47,7 +47,7 @@ We welcome contributions to Vortox! If you'd like to contribute. We will thank y
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [AGPLv3](LICENSE).
 
 ## Contact
 
